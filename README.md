@@ -1,4 +1,5 @@
 # nutri_app
+<<<<<<< HEAD
 
 A new Flutter project.
 
@@ -14,3 +15,6 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+=======
+Projeto para a faculdade 
+>>>>>>> c19596b9425dcbbd9be17cb6989a84735d8d913f
