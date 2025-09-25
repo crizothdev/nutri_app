@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:nutri_app/bindings.dart';
-import 'package:nutri_app/modules/login/login_controller.dart';
+import 'package:nutri_app/modules/food_menus/food_menus_controller.dart';
 import 'package:nutri_app/widgets/statefull_wrapper.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class FoodMenusPage extends StatefulWidget {
+  const FoodMenusPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<FoodMenusPage> createState() => _FoodMenusPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _FoodMenusPageState extends State<FoodMenusPage> {
   final controller =
-      AppBindings.I.get<LoginController>(() => LoginController());
+      AppBindings.I.get<FoodMenusController>(() => FoodMenusController());
 
   @override
   void dispose() {
@@ -22,7 +22,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return NotifierScaffold<LoginController>(
+    return NotifierScaffold<FoodMenusController>(
       state: controller,
       builder: (context, state) {
         return Container();
