@@ -24,6 +24,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return NotifierScaffold<ProfileController>(
       state: controller,
+      isLoading: controller.isLoading,
       builder: (context, state) {
         return Container();
       },

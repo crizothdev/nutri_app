@@ -24,6 +24,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return NotifierScaffold<LoginController>(
       state: controller,
+      isLoading: controller.isLoading,
       builder: (context, state) {
         return Container();
       },

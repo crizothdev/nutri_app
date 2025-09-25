@@ -24,6 +24,7 @@ class _FoodMenusPageState extends State<FoodMenusPage> {
   Widget build(BuildContext context) {
     return NotifierScaffold<FoodMenusController>(
       state: controller,
+      isLoading: controller.isLoading,
       builder: (context, state) {
         return Container();
       },

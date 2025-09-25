@@ -24,6 +24,7 @@ class _SignupPageState extends State<SignupPage> {
   Widget build(BuildContext context) {
     return NotifierScaffold<SignupController>(
       state: controller,
+      isLoading: controller.isLoading,
       builder: (context, state) {
         return Container();
       },

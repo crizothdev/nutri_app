@@ -23,6 +23,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return NotifierScaffold<HomeController>(
       state: controller,
+      isLoading: controller.isLoading,
       builder: (context, state) {
         return Container();
       },

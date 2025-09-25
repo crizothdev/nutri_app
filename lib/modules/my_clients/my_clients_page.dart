@@ -24,6 +24,7 @@ class _MyClientsPageState extends State<MyClientsPage> {
   Widget build(BuildContext context) {
     return NotifierScaffold<MyClientsController>(
       state: controller,
+      isLoading: controller.isLoading,
       builder: (context, state) {
         return Container();
       },
