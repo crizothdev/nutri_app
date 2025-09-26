@@ -8,37 +8,44 @@ import 'package:nutri_app/modules/signup/signup_page.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
+const String _HomeRoute = '/';
+const String _LoginRoute = '/login';
+const String _MyClientsRoute = '/myclients';
+const String _ProfileRoute = '/profile';
+const String _SignupRoute = '/signup';
+const String _FoodMenusRoute = '/foodmenus';
+
 final routes = {
-  '/': (context) => const HomePage(),
-  '/login': (context) => const LoginPage(),
-  '/myclients': (context) => const MyClientsPage(),
-  '/profile': (context) => const ProfilePage(),
-  '/signup': (context) => const SignupPage(),
-  '/foodmenus': (context) => const FoodMenusPage(),
+  _HomeRoute: (context) => const HomePage(),
+  _LoginRoute: (context) => const LoginPage(),
+  _MyClientsRoute: (context) => const MyClientsPage(),
+  _ProfileRoute: (context) => const ProfilePage(),
+  _SignupRoute: (context) => const SignupPage(),
+  _FoodMenusRoute: (context) => const FoodMenusPage(),
 };
 
 void goHome() {
-  navigatorKey.currentState?.pushReplacementNamed('/');
+  navigatorKey.currentState?.pushReplacementNamed(_HomeRoute);
 }
 
 void goLogin() {
-  navigatorKey.currentState?.pushNamed('/login');
+  navigatorKey.currentState?.pushNamed(_LoginRoute);
 }
 
 void goFoodMenus() {
-  navigatorKey.currentState?.pushNamed('/foodmenus');
+  navigatorKey.currentState?.pushNamed(_FoodMenusRoute);
 }
 
 void goMyClients() {
-  navigatorKey.currentState?.pushNamed('/myclients');
+  navigatorKey.currentState?.pushNamed(_MyClientsRoute);
 }
 
 void goProfile() {
-  navigatorKey.currentState?.pushNamed('/profile');
+  navigatorKey.currentState?.pushNamed(_ProfileRoute);
 }
 
 void goSignup() {
-  navigatorKey.currentState?.pushNamed('/signup');
+  navigatorKey.currentState?.pushNamed(_SignupRoute);
 }
 
 void goBack() {
