@@ -2,20 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:nutri_app/modules/food_menus/food_menus_page.dart';
 import 'package:nutri_app/modules/home/home_page.dart';
 import 'package:nutri_app/modules/login/login_page.dart';
+import 'package:nutri_app/modules/login/splash_page.dart';
 import 'package:nutri_app/modules/my_clients/my_clients_page.dart';
 import 'package:nutri_app/modules/profile/profile_page.dart';
 import 'package:nutri_app/modules/signup/signup_page.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-const String _HomeRoute = '/';
+const String _SplashRoute = '/';
 const String _LoginRoute = '/login';
+const String _HomeRoute = '/home';
 const String _MyClientsRoute = '/myclients';
 const String _ProfileRoute = '/profile';
 const String _SignupRoute = '/signup';
 const String _FoodMenusRoute = '/foodmenus';
 
 final routes = {
+  _SplashRoute: (context) => const SplashPage(),
   _HomeRoute: (context) => const HomePage(),
   _LoginRoute: (context) => const LoginPage(),
   _MyClientsRoute: (context) => const MyClientsPage(),
