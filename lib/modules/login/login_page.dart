@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nutri_app/bindings.dart';
 import 'package:nutri_app/modules/login/login_controller.dart';
+import 'package:nutri_app/routes.dart';
 import 'package:nutri_app/widgets/statefull_wrapper.dart';
 
 /// Tela de Login do app.
@@ -109,6 +110,7 @@ class _LoginPageState extends State<LoginPage> {
                     TextButton(
                       onPressed: () {
                         /// Ação para recuperação de senha ou login esquecido.
+                        
                       },
                       child: const Text('Esqueceu login ou senha?'),
                     ),
@@ -125,6 +127,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: FilledButton(
                           onPressed: () {
                             /// Aqui será implementada a lógica de autenticação.
+                            goClientsDetail();
                           },
                           style: FilledButton.styleFrom(
                             shape: RoundedRectangleBorder(
