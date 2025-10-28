@@ -122,6 +122,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: FilledButton(
                           onPressed: () {
                             /// Aqui será implementada a lógica de autenticação.
+                            goClientsDetail();
                           },
                           style: FilledButton.styleFrom(
                             shape: RoundedRectangleBorder(

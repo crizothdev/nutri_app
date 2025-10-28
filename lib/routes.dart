@@ -4,6 +4,7 @@ import 'package:nutri_app/modules/home/home_page.dart';
 import 'package:nutri_app/modules/login/login_page.dart';
 import 'package:nutri_app/modules/login/splash_page.dart';
 import 'package:nutri_app/modules/my_clients/my_clients_page.dart';
+import 'package:nutri_app/modules/my_clients/clients_detail.dart';
 import 'package:nutri_app/modules/profile/profile_page.dart';
 import 'package:nutri_app/modules/signup/signup_page.dart';
 
@@ -16,12 +17,15 @@ const String _MyClientsRoute = '/myclients';
 const String _ProfileRoute = '/profile';
 const String _SignupRoute = '/signup';
 const String _FoodMenusRoute = '/foodmenus';
+const String _ClientsDetailRoute = '/clientDetail';
+
 
 final routes = {
   _SplashRoute: (context) => const SplashPage(),
   _HomeRoute: (context) => const HomePage(),
   _LoginRoute: (context) => const LoginPage(),
   _MyClientsRoute: (context) => const MyClientsPage(),
+  _ClientsDetailRoute: (context) => const ClientsDetail(),
   _ProfileRoute: (context) => const ProfilePage(),
   _SignupRoute: (context) => const SignupPage(),
   _FoodMenusRoute: (context) => const FoodMenusPage(),
@@ -41,6 +45,10 @@ void goFoodMenus() {
 
 void goMyClients() {
   navigatorKey.currentState?.pushNamed(_MyClientsRoute);
+}
+
+void goClientsDetail() {
+  navigatorKey.currentState?.pushNamed(_ClientsDetailRoute);
 }
 
 void goProfile() {
