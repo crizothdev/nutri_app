@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:nutri_app/bindings.dart';
 import 'package:nutri_app/modules/login/login_controller.dart';
+import 'package:nutri_app/routes.dart';
+import 'package:nutri_app/widgets/outlined_text_field.dart';
 import 'package:nutri_app/widgets/statefull_wrapper.dart';
 
 /// Tela de Login do app.
@@ -29,6 +31,8 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final TextEditingController usernameController = TextEditingController();
+    final TextEditingController passwordController = TextEditingController();
     return NotifierScaffold<LoginController>(
       /// Vincula o estado ao NotifierScaffold para atualização automática da UI
       state: controller,
@@ -68,14 +72,10 @@ class _LoginPageState extends State<LoginPage> {
                 ),
 
                 /// Campo de texto para o login com borda arredondada.
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Digite algo',
-                    hintText: 'Texto aqui...',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                  ),
+                OutlinedTextField(
+                  hintText: 'Digite algo',
+                  labelText: 'Texto aqui...',
+                  controller: usernameController,
                 ),
 
                 const SizedBox(height: 10),
@@ -91,14 +91,11 @@ class _LoginPageState extends State<LoginPage> {
                 /// Campo de texto para senha.
                 /// (Neste caso ainda não está configurado como campo de senha real,
                 /// o ideal seria adicionar obscureText: true para ocultar os caracteres).
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Digite algo',
-                    hintText: 'Texto aqui...',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                  ),
+                OutlinedTextField(
+                  hintText: 'Digite algo',
+                  labelText: 'Texto aqui...',
+                  controller: passwordController,
+                  obscureText: true,
                 ),
 
                 /// Botão para recuperação de login/senha,
@@ -141,7 +138,7 @@ class _LoginPageState extends State<LoginPage> {
                 /// Botão para redirecionar à tela de registro.
                 TextButton(
                   onPressed: () {
-                    /// Ação para criar uma nova conta.
+                    goSignup();
                   },
                   child: const Text('Registre-se'),
                 ),

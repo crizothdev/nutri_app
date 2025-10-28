@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:nutri_app/app_initializer.dart';
 import 'package:nutri_app/bindings.dart';
 import 'package:nutri_app/routes.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AppInitializer.init();
   runApp(const MyApp());
 }
 
