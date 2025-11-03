@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:nutri_app/bindings.dart';
 import 'package:nutri_app/modules/profile/profile_controller.dart';
 import 'package:nutri_app/widgets/statefull_wrapper.dart';
 // import 'package:nutri_app/routes.dart'; // Removido, pois a edição será local
@@ -12,11 +11,16 @@ class ClientsDetail extends StatefulWidget {
 }
 
 class _ClientsDetailState extends State<ClientsDetail> {
-  final controller =
-      AppBindings.I.get<ProfileController>(() => ProfileController());
+  late final controller;
 
   // NOVO: Variável de estado para controlar o modo de edição
-  bool _isEditing = false; 
+  bool _isEditing = false;
+
+  @override
+  void initState() {
+    controller = ProfileController();
+    super.initState();
+  }
 
   @override
   void dispose() {
@@ -51,12 +55,12 @@ class _ClientsDetailState extends State<ClientsDetail> {
                             // 1. Coletar os dados dos campos (se forem usados controllers)
                             // 2. Enviar para o controller ou API
                             // 3. Opcional: Mostrar uma mensagem de sucesso
-                            
+
                             // Sai do modo de edição
-                            _isEditing = false; 
+                            _isEditing = false;
                           } else {
                             // Entra no modo de edição
-                            _isEditing = true; 
+                            _isEditing = true;
                           }
                         });
                       },
@@ -71,10 +75,11 @@ class _ClientsDetailState extends State<ClientsDetail> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    
+
                     // CAMPOS: Passando o _isEditing para controlar a edição
                     _buildLabel('Nome'),
-                    _buildField('Ana Carolina Fernandes', isEnabled: _isEditing),
+                    _buildField('Ana Carolina Fernandes',
+                        isEnabled: _isEditing),
                     _buildLabel('E-mail'),
                     _buildField('ana.carolina@mail.com', isEnabled: _isEditing),
                     _buildLabel('Telefone'),
@@ -96,8 +101,8 @@ class _ClientsDetailState extends State<ClientsDetail> {
                     bottomRight: Radius.circular(25),
                   ),
                 ),
-                padding:
-                    const EdgeInsets.only(top: 50, left: 16, right: 16, bottom: 16),
+                padding: const EdgeInsets.only(
+                    top: 50, left: 16, right: 16, bottom: 16),
                 child: Row(
                   children: [
                     IconButton(
@@ -135,8 +140,7 @@ class _ClientsDetailState extends State<ClientsDetail> {
                     ),
                     child: const CircleAvatar(
                       radius: 50,
-                      backgroundImage:
-                          AssetImage('assets/avatar.jpg'),
+                      backgroundImage: AssetImage('assets/avatar.jpg'),
                     ),
                   ),
                 ),
@@ -199,7 +203,7 @@ class _ClientsDetailState extends State<ClientsDetail> {
           borderRadius: BorderRadius.circular(25),
           borderSide: BorderSide(
             // Usa uma cor diferente se estiver desabilitado (opcional)
-            color: isEnabled ? Colors.green : Colors.grey.shade300, 
+            color: isEnabled ? Colors.green : Colors.grey.shade300,
             width: 1,
           ),
         ),

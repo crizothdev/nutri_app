@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:nutri_app/app_initializer.dart';
-import 'package:nutri_app/bindings.dart';
 import 'package:nutri_app/routes.dart';
 
 void main() async {
@@ -20,13 +19,6 @@ class _MyAppState extends State<MyApp> {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    @override
-    void dispose() {
-      AppBindings.I
-          .disposeAll(); // limpa tudo (ex.: ao fechar app ou no fluxo de logout)
-      super.dispose();
-    }
-
     return MaterialApp(
       navigatorKey: navigatorKey,
       title: 'Nutrify',

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:nutri_app/bindings.dart';
 import 'package:nutri_app/modules/food_menus/food_menus_controller.dart';
 import 'package:nutri_app/widgets/statefull_wrapper.dart';
 
@@ -11,8 +10,7 @@ class FoodMenusPage extends StatefulWidget {
 }
 
 class _FoodMenusPageState extends State<FoodMenusPage> {
-  final controller =
-      AppBindings.I.get<FoodMenusController>(() => FoodMenusController());
+  final controller = FoodMenusController();
 
   @override
   void dispose() {

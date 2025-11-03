@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:nutri_app/bindings.dart';
 import 'package:nutri_app/modules/home/home_controller.dart';
 import 'package:nutri_app/routes.dart';
 import 'package:nutri_app/widgets/statefull_wrapper.dart';

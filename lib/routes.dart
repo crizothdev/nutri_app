@@ -19,7 +19,6 @@ const String _SignupRoute = '/signup';
 const String _FoodMenusRoute = '/foodmenus';
 const String _ClientsDetailRoute = '/clientDetail';
 
-
 final routes = {
   _SplashRoute: (context) => const SplashPage(),
   _HomeRoute: (context) => const HomePage(),
@@ -36,7 +35,7 @@ void goHome() {
 }
 
 void goLogin() {
-  navigatorKey.currentState?.pushNamed(_LoginRoute);
+  navigatorKey.currentState?.pushReplacementNamed(_LoginRoute);
 }
 
 void goFoodMenus() {

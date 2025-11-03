@@ -4,6 +4,7 @@ class NotifierScaffold<S extends ChangeNotifier> extends StatelessWidget {
   final S state;
   bool isLoading;
   final PreferredSizeWidget? appBar;
+  final Widget? floatingActionButton;
   final Widget Function(BuildContext context, S state) builder;
 
   NotifierScaffold({
@@ -11,6 +12,7 @@ class NotifierScaffold<S extends ChangeNotifier> extends StatelessWidget {
     required this.state,
     required this.builder,
     this.appBar,
+    this.floatingActionButton,
     this.isLoading = false,
   });
 
@@ -22,6 +24,7 @@ class NotifierScaffold<S extends ChangeNotifier> extends StatelessWidget {
         final loading = isLoading;
         return Scaffold(
           appBar: appBar,
+          floatingActionButton: floatingActionButton,
           body: loading
               ? const Center(child: CircularProgressIndicator())
               : builder(context, state),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:nutri_app/bindings.dart';
 import 'package:nutri_app/modules/login/login_controller.dart';
 import 'package:nutri_app/modules/signup/signup_controller.dart';
 import 'package:nutri_app/widgets/outlined_text_field.dart';
@@ -13,8 +12,7 @@ class SignupPage extends StatefulWidget {
 }
 
 class _SignupPageState extends State<SignupPage> {
-  final controller =
-      AppBindings.I.get<SignupController>(() => SignupController());
+  final controller = SignupController();
 
   @override
   void dispose() {

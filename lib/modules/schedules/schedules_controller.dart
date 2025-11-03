@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class HomeController extends ChangeNotifier {
+class SchedulesController extends ChangeNotifier {
   bool _isLoading = false;
   Set<DateTime> markedDays = {};
   toggleLoading(bool val) {

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:nutri_app/bindings.dart';
 import 'package:nutri_app/modules/login/login_controller.dart';
 import 'package:nutri_app/routes.dart';
 import 'package:nutri_app/widgets/outlined_text_field.dart';
@@ -18,8 +17,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   /// Controller responsável pela lógica do login.
   /// Obtido através do AppBindings para injeção de dependências.
-  final controller =
-      AppBindings.I.get<LoginController>(() => LoginController());
+  final controller = LoginController();
 
   @override
   void dispose() {
@@ -122,7 +120,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: FilledButton(
                           onPressed: () {
                             /// Aqui será implementada a lógica de autenticação.
-                            goClientsDetail();
+                            goHome();
                           },
                           style: FilledButton.styleFrom(
                             shape: RoundedRectangleBorder(

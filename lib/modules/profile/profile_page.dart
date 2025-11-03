@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:nutri_app/bindings.dart';
 import 'package:nutri_app/modules/profile/profile_controller.dart';
 import 'package:nutri_app/widgets/statefull_wrapper.dart';
 
@@ -11,8 +10,7 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  final controller =
-      AppBindings.I.get<ProfileController>(() => ProfileController());
+  final controller = ProfileController();
 
   @override
   void dispose() {
