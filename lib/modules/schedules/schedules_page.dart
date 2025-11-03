@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nutri_app/modules/home/home_page.dart';
 import 'package:nutri_app/modules/schedules/schedules_controller.dart';
 import 'package:nutri_app/widgets/statefull_wrapper.dart';
 
@@ -16,6 +17,12 @@ class _SchedulesPageState extends State<SchedulesPage> {
   void dispose() {
     controller.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    controller.getAllSchedules();
+    super.initState();
   }
 
   @override
@@ -45,13 +52,12 @@ class _SchedulesPageState extends State<SchedulesPage> {
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(22),
-            child: Column(
-              spacing: 12,
-              children: [
-                ScheduleCard(),
-                ScheduleCard(),
-                ScheduleCard(),
-              ],
+            child: ListView.builder(
+              itemCount: controller.schedules.length,
+              itemBuilder: (context, index) {
+                final item = controller.schedules[index];
+                return ScheduleCard(item: item);
+              },
             ),
           ),
         );
@@ -61,7 +67,13 @@ class _SchedulesPageState extends State<SchedulesPage> {
 }
 
 class ScheduleCard extends StatelessWidget {
-  const ScheduleCard({super.key});
+  final ScheduleModel item;
+  const ScheduleCard({super.key, required this.item});
+
+  formatDate(String isoDate) {
+    final date = DateTime.parse(isoDate);
+    return '${date.day}/${date.month}/${date.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,15 +97,15 @@ class ScheduleCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Nome do Paciente',
+              item.patientName,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
             SizedBox(height: 8),
-            Text('Horário: 10:00 - 11:00'),
-            Text('Telefone: (99) 99999-9999'),
+            Text('Data: ${formatDate(item.dateIso)}'),
+            Text('Telefone: ${item.phoneNumber}'),
           ],
         ),
       ),

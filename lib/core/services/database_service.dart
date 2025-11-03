@@ -22,6 +22,7 @@ class LocalDatabaseService {
         await createTables(db);
       },
       onUpgrade: (db, oldV, newV) async {
+        // Mantido por compatibilidade, mas você vai resetar o cache.
         if (oldV < 2) {
           await _migrateToV2(db);
         }
@@ -34,17 +35,16 @@ class LocalDatabaseService {
   Future<void> createTables(Database database) async {
     // users
     await database.execute('''
-  CREATE TABLE users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT,
-    username TEXT NOT NULL,
-    password TEXT NOT NULL,
-    email TEXT,
-    phone TEXT,
-    document TEXT
-  )
-''');
-// (opcional, mas recomendado)
+      CREATE TABLE users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        username TEXT NOT NULL,
+        password TEXT NOT NULL,
+        email TEXT,
+        phone TEXT,
+        document TEXT
+      )
+    ''');
     await database.execute(
         'CREATE UNIQUE INDEX IF NOT EXISTS ux_users_username ON users(username)');
     await database.execute(
@@ -62,7 +62,7 @@ class LocalDatabaseService {
       )
     ''');
 
-    // menus (sem client_id já na criação nova)
+    // menus
     await database.execute('''
       CREATE TABLE menus (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -71,7 +71,7 @@ class LocalDatabaseService {
       )
     ''');
 
-    // Tabela de associação muitos-para-muitos
+    // client_menus (N:N)
     await database.execute('''
       CREATE TABLE client_menus (
         client_id INTEGER NOT NULL,
@@ -118,19 +118,34 @@ class LocalDatabaseService {
       )
     ''');
 
-    // schedules (já com title)
+    // ---------------------------
+    // schedules (DESNORMALIZADA)
+    // ---------------------------
     await database.execute('''
       CREATE TABLE schedules (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        client_id INTEGER NOT NULL,
-        date_iso TEXT,
+        client_id INTEGER NULL,
+        patient_name TEXT NOT NULL,
+        phone_number TEXT,
+        date_iso TEXT NOT NULL,     -- "YYYY-MM-DD"
+        start_time TEXT NOT NULL,   -- "HH:mm"
+        end_time TEXT NOT NULL,     -- "HH:mm"
         title TEXT,
         description TEXT,
-        FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
+        status TEXT DEFAULT 'scheduled',
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL
       )
     ''');
 
-    // Índices úteis
+    // Índices úteis para calendário e ordenação
+    await database.execute(
+        'CREATE INDEX IF NOT EXISTS idx_schedules_date ON schedules(date_iso)');
+    await database.execute(
+        'CREATE INDEX IF NOT EXISTS idx_schedules_date_start ON schedules(date_iso, start_time)');
+
+    // Índices já existentes
     await database
         .execute('CREATE INDEX IF NOT EXISTS idx_meals_menu ON meals(menu_id)');
     await database.execute(
@@ -139,22 +154,20 @@ class LocalDatabaseService {
         'CREATE INDEX IF NOT EXISTS idx_clientmenus_client ON client_menus(client_id)');
   }
 
+  // Mantido caso precise subir de v1 -> v2 em algum cenário
   Future<void> _migrateToV2(Database db) async {
-    // 1) Garantir colunas novas em schedules
+    // Exemplo anterior preservado. Como você reseta o cache, não é necessário.
     final schedulesInfo = await db.rawQuery("PRAGMA table_info('schedules')");
     final hasTitle = schedulesInfo.any((c) => (c['name'] as String) == 'title');
     if (!hasTitle) {
       await db.execute("ALTER TABLE schedules ADD COLUMN title TEXT");
     }
 
-    // 2) Migrar client_id de menus para client_menus e remover client_id de menus
-    // Detectar se menus tem client_id
     final menusInfo = await db.rawQuery("PRAGMA table_info('menus')");
     final hadClientId =
         menusInfo.any((c) => (c['name'] as String) == 'client_id');
 
     if (hadClientId) {
-      // Criar client_menus se não existir
       await db.execute('''
         CREATE TABLE IF NOT EXISTS client_menus (
           client_id INTEGER NOT NULL,
@@ -165,22 +178,21 @@ class LocalDatabaseService {
         )
       ''');
 
-      // Backfill: para cada menu com client_id, criar vínculo em client_menus
       final rows = await db.rawQuery(
           'SELECT id, client_id FROM menus WHERE client_id IS NOT NULL');
       final batch = db.batch();
       for (final r in rows) {
         batch.insert(
-            'client_menus',
-            {
-              'client_id': r['client_id'],
-              'menu_id': r['id'],
-            },
-            conflictAlgorithm: ConflictAlgorithm.ignore);
+          'client_menus',
+          {
+            'client_id': r['client_id'],
+            'menu_id': r['id'],
+          },
+          conflictAlgorithm: ConflictAlgorithm.ignore,
+        );
       }
       await batch.commit(noResult: true);
 
-      // Remover client_id de menus (recriar tabela menus sem client_id)
       await db.execute('ALTER TABLE menus RENAME TO menus_old');
       await db.execute('''
         CREATE TABLE menus (
@@ -196,7 +208,6 @@ class LocalDatabaseService {
       await db.execute('DROP TABLE menus_old');
     }
 
-    // Índices
     await db
         .execute('CREATE INDEX IF NOT EXISTS idx_meals_menu ON meals(menu_id)');
     await db.execute(
@@ -209,7 +220,6 @@ class LocalDatabaseService {
   // CRUD genéricos
   // ---------------------------
 
-  /// Insert genérico
   Future<int> insertData(
     TableNames table,
     Map<String, dynamic> data, {
@@ -219,7 +229,6 @@ class LocalDatabaseService {
         conflictAlgorithm: conflictAlgorithm);
   }
 
-  /// Query genérico
   Future<List<Map<String, dynamic>>> getData(
     TableNames table, {
     List<String>? columns,
@@ -242,7 +251,6 @@ class LocalDatabaseService {
     );
   }
 
-  /// Update genérico (com cláusula custom)
   Future<int> updateData(
     TableNames table,
     Map<String, dynamic> data, {
@@ -259,7 +267,6 @@ class LocalDatabaseService {
     );
   }
 
-  /// Conveniência: update por ID (espera que [data] contenha 'id' ou recebe via parâmetro)
   Future<int> updateById(
     TableNames table,
     Map<String, dynamic> data, {
@@ -280,12 +287,10 @@ class LocalDatabaseService {
     );
   }
 
-  /// Delete por ID
   Future<int> deleteData(TableNames table, int id) async {
     return await database.delete(table.name, where: 'id = ?', whereArgs: [id]);
   }
 
-  /// Delete com cláusula custom
   Future<int> deleteWhere(
     TableNames table, {
     required String where,
@@ -294,10 +299,6 @@ class LocalDatabaseService {
     return await database.delete(table.name,
         where: where, whereArgs: whereArgs);
   }
-
-  // ---------------------------
-  // Helpers adicionais
-  // ---------------------------
 
   Future<List<Map<String, Object?>>> rawQuery(String sql,
       [List<Object?>? args]) {

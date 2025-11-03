@@ -1,12 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:nutri_app/app_initializer.dart';
+import 'package:nutri_app/core/models/schedule.dart';
+import 'package:nutri_app/modules/home/home_page.dart';
 
 class SchedulesController extends ChangeNotifier {
-  bool _isLoading = false;
+  bool isLoading = false;
   Set<DateTime> markedDays = {};
+  List<ScheduleModel> schedules = [];
+  final scheduleService = AppInitializer.schedulesRepository;
+
   toggleLoading(bool val) {
-    _isLoading = !_isLoading;
+    isLoading = val;
     notifyListeners();
   }
 
-  bool get isLoading => _isLoading == true;
+  getAllSchedules() async {
+    try {
+      schedules = await scheduleService.get();
+
+      // Process schedules
+    } catch (e) {
+      // Handle error
+    } finally {
+      toggleLoading(false);
+    }
+  }
 }

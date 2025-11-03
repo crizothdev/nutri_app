@@ -1,23 +1,72 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+
 import 'package:nutri_app/modules/home/home_controller.dart';
 import 'package:nutri_app/routes.dart';
 import 'package:nutri_app/widgets/main_menu_calendar.dart';
 import 'package:nutri_app/widgets/statefull_wrapper.dart';
 
 class ScheduleModel {
-  String patientName;
-  String startTime;
-  String endTime;
-  String phoneNumber;
-  DateTime date;
+  final int? id;
+  final int? clientId; // opcional
+  final String patientName; // obrigatório
+  final String? phoneNumber; // opcional
+  final DateTime date; // só a data
+  final String startTime; // "HH:mm"
+  final String endTime; // "HH:mm"
+  final String? title;
+  final String? description;
+  final String status; // 'scheduled'|'done'|'canceled'
 
   ScheduleModel({
+    this.id,
+    this.clientId,
     required this.patientName,
+    this.phoneNumber,
+    required this.date,
     required this.startTime,
     required this.endTime,
-    required this.phoneNumber,
-    required this.date,
+    this.title,
+    this.description,
+    this.status = 'scheduled',
   });
+
+  String get dateIso =>
+      "${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+
+  Map<String, dynamic> toMap() => {
+        if (id != null) 'id': id,
+        'client_id': clientId,
+        'patient_name': patientName,
+        'phone_number': phoneNumber,
+        'date_iso': dateIso,
+        'start_time': startTime,
+        'end_time': endTime,
+        'title': title,
+        'description': description,
+        'status': status,
+      };
+
+  factory ScheduleModel.fromMap(Map<String, dynamic> map) {
+    final parts = (map['date_iso'] as String).split('-');
+    final y = int.parse(parts[0]);
+    final m = int.parse(parts[1]);
+    final d = int.parse(parts[2]);
+
+    return ScheduleModel(
+      id: map['id'] as int?,
+      clientId: map['client_id'] as int?,
+      patientName: map['patient_name'] as String,
+      phoneNumber: map['phone_number'] as String?,
+      date: DateTime(y, m, d),
+      startTime: map['start_time'] as String,
+      endTime: map['end_time'] as String,
+      title: map['title'] as String?,
+      description: map['description'] as String?,
+      status: (map['status'] as String?) ?? 'scheduled',
+    );
+  }
 }
 
 class HomePage extends StatefulWidget {
@@ -37,46 +86,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   showNewScheduleModal(DateTime selectedDate) {
-    return showModalBottomSheet(
-        context: context,
-        builder: (context) {
-          final nameController = TextEditingController();
-          final startTimeController = TextEditingController();
-          final endTimeController = TextEditingController();
-          final phoneController = TextEditingController();
-
-          return Container(
-            padding: EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('Novo Agendamento', style: TextStyle(fontSize: 24)),
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(labelText: 'Nome do Paciente'),
-                ),
-                TextField(
-                  controller: startTimeController,
-                  decoration: InputDecoration(labelText: 'Horário de Início'),
-                ),
-                TextField(
-                  controller: endTimeController,
-                  decoration: InputDecoration(labelText: 'Horário de Fim'),
-                ),
-                TextField(
-                  controller: phoneController,
-                  decoration: InputDecoration(labelText: 'Telefone'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    // Lógica para criar novo agendamento
-                  },
-                  child: Text('Salvar'),
-                ),
-              ],
-            ),
-          );
-        });
+    goNewSchedule(selectedDate);
   }
 
   openDayInfo(DateTime date) {
@@ -190,7 +200,7 @@ class _HomePageState extends State<HomePage> {
                     SizedBox(height: 12),
                     OutlinedButton(
                         onPressed: () {
-                          goMyClients();
+                          goSchedules();
                         },
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,

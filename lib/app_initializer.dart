@@ -61,9 +61,9 @@ class AppInitializer {
   }
 }
 
-get usersRepository => AppInitializer.usersRepository;
-get clientsRepository => AppInitializer.clientsRepository;
-get foodsRepository => AppInitializer.foodsRepository;
-get mealsRepository => AppInitializer.mealsRepository;
-get menusRepository => AppInitializer.menusRepository;
-get schedulesRepository => AppInitializer.schedulesRepository;
+// get usersRepository => AppInitializer.usersRepository;
+// get clientsRepository => AppInitializer.clientsRepository;
+// get foodsRepository => AppInitializer.foodsRepository;
+// get mealsRepository => AppInitializer.mealsRepository;
+// get menusRepository => AppInitializer.menusRepository;
+// get  schedulesRepository => AppInitializer.schedulesRepository;

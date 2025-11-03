@@ -1,3 +1,5 @@
+import 'package:nutri_app/modules/home/home_page.dart';
+
 import '../../models/schedule.dart';
 import '../../services/database_service.dart';
 import '../../datasources/schedules_datasource.dart';
@@ -12,31 +14,33 @@ class SchedulesRepositoryImpl implements SchedulesRepository {
   }
 
   @override
-  Future<int> create(Schedule s) async {
+  Future<int> create(ScheduleModel s) async {
     return await _ds.createSchedule(
       clientId: s.clientId,
+      patientName: s.patientName,
+      phoneNumber: s.phoneNumber,
       dateIso: s.dateIso,
+      startTime: s.startTime,
+      endTime: s.endTime,
       title: s.title,
       description: s.description,
+      status: s.status,
     );
   }
 
   @override
-  Future<List<Schedule>> byClient(int clientId,
-      {String? fromIso, String? toIso}) async {
-    final rows =
-        await _ds.getClientSchedules(clientId, fromIso: fromIso, toIso: toIso);
-    return rows.map(Schedule.fromMap).toList();
+  Future<List<ScheduleModel>> get({int? year, int? month}) async {
+    final response = await _ds.getMonthSchedules(
+        year: year ?? DateTime.now().year,
+        month: month ?? DateTime.now().month);
+
+    final List<ScheduleModel> schedules =
+        response.map<ScheduleModel>((e) => ScheduleModel.fromMap(e)).toList();
+    return schedules.isNotEmpty ? schedules : [];
   }
 
   @override
-  Future<Schedule?> get(int id) async {
-    final r = await _ds.getSchedule(id);
-    return r == null ? null : Schedule.fromMap(r);
-  }
-
-  @override
-  Future<void> update(Schedule s) async {
+  Future<void> update(ScheduleModel s) async {
     if (s.id == null)
       throw ArgumentError('Schedule.id é obrigatório para update');
     await _ds.updateSchedule(

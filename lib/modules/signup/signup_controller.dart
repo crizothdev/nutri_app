@@ -26,9 +26,9 @@ class SignupController extends ChangeNotifier {
   }
 
   createUser() async {
-    await usersRepository.createUser(
+    await AppInitializer.usersRepository.create(
       User(
-        name:  usernameController.text,
+        name: usernameController.text,
         username: usernameController.text,
         password: passwordController.text,
         email: emailController.text,

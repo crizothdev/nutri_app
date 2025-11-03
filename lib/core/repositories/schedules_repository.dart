@@ -1,10 +1,10 @@
+import 'package:nutri_app/modules/home/home_page.dart';
+
 import '../models/schedule.dart';
 
 abstract class SchedulesRepository {
-  Future<int> create(Schedule schedule);
-  Future<List<Schedule>> byClient(int clientId,
-      {String? fromIso, String? toIso});
-  Future<Schedule?> get(int id);
-  Future<void> update(Schedule schedule);
+  Future<int> create(ScheduleModel schedule);
+  Future<dynamic> get({int? year, int? month});
+  Future<void> update(ScheduleModel schedule);
   Future<void> delete(int id);
 }
