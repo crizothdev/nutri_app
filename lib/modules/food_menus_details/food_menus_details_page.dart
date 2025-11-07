@@ -30,9 +30,9 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFEFF2E9), // fundo verde clarinho
+      backgroundColor: const Color(0xFFEFF2E9), 
       appBar: AppBar(
-        backgroundColor: const Color(0xFFBFCDB3), // verde suave
+        backgroundColor: const Color(0xFFBFCDB3), 
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
@@ -71,3 +71,4 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
     );
   }
 }
+
