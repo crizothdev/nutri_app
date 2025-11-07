@@ -21,7 +21,7 @@ class MenuDetailController extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    await Future.delayed(const Duration(milliseconds: 400)); // simula delay
+    await Future.delayed(const Duration(milliseconds: 400));
 
     // Mocks
     _meals = [
@@ -50,3 +50,4 @@ class MenuDetailController extends ChangeNotifier {
     notifyListeners();
   }
 }
+
