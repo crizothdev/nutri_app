@@ -20,6 +20,26 @@ class _SignupPageState extends State<SignupPage> {
     super.dispose();
   }
 
+  showSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Sucesso'),
+          content: const Text('Usuário criado com sucesso!'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final TextEditingController usernameController = TextEditingController();
@@ -28,6 +48,13 @@ class _SignupPageState extends State<SignupPage> {
       state: controller,
       isLoading: controller.isLoading,
       builder: (context, state) {
+        if (state.showSuccesDialog) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            showSuccessDialog();
+            state.showSuccesDialog = false;
+          });
+        }
+
         return Center(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 60),
@@ -70,7 +97,6 @@ class _SignupPageState extends State<SignupPage> {
                   hintText: 'Digite algo',
                   labelText: 'nome completo',
                   controller: state.nameController,
-                  obscureText: true,
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -82,7 +108,6 @@ class _SignupPageState extends State<SignupPage> {
                   hintText: 'Digite algo',
                   labelText: 'meu@email.com',
                   controller: state.emailController,
-                  obscureText: true,
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -94,7 +119,6 @@ class _SignupPageState extends State<SignupPage> {
                   hintText: 'Digite algo',
                   labelText: '12 99596 2256',
                   controller: state.phoneController,
-                  obscureText: true,
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -106,7 +130,6 @@ class _SignupPageState extends State<SignupPage> {
                   hintText: 'Digite algo',
                   labelText: '000.000.000.00',
                   controller: state.documentController,
-                  obscureText: true,
                 ),
                 SizedBox(height: 22),
                 Row(
@@ -115,7 +138,9 @@ class _SignupPageState extends State<SignupPage> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 40),
                         child: FilledButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            state.createUser();
+                          },
                           style: FilledButton.styleFrom(
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(6),

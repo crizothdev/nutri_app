@@ -57,6 +57,9 @@ class LocalDatabaseService {
         user_id INTEGER NOT NULL,
         name TEXT,
         email TEXT,
+        phone TEXT,
+        weight TEXT,
+        height TEXT,
         notes TEXT,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )

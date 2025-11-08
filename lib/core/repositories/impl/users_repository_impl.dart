@@ -1,3 +1,5 @@
+import 'package:nutri_app/core/repositories/impl/data_utils.dart';
+
 import '../../models/user.dart';
 import '../../services/database_service.dart';
 import '../../datasources/user_datasource.dart';
@@ -36,5 +38,17 @@ class UsersRepositoryImpl implements UsersRepository {
   @override
   Future<void> delete(int userId) async {
     await _ds.deleteUser(userId);
+  }
+
+  @override
+  Future<User> makeLogin(String username, String password) async {
+    try {
+      final response = await _ds.makeLogin(username, password);
+      final _data = normalizeQueryResult(response);
+      final user = User.fromMap(_data);
+      return Future.value(user);
+    } catch (e) {
+      return Future.error('Login failed');
+    }
   }
 }

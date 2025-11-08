@@ -8,6 +8,7 @@ class SignupController extends ChangeNotifier {
   final dbService = LocalDatabaseService();
   late UserDatasource userDatasource;
   bool isLoading = false;
+  bool showSuccesDialog = false;
   TextEditingController usernameController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   TextEditingController nameController = TextEditingController();
@@ -26,16 +27,26 @@ class SignupController extends ChangeNotifier {
   }
 
   createUser() async {
-    await AppInitializer.usersRepository.create(
-      User(
-        name: usernameController.text,
-        username: usernameController.text,
-        password: passwordController.text,
-        email: emailController.text,
-        phone: phoneController.text,
-        document: documentController.text,
-      ),
-    );
+    try {
+      final userCreatedId = await AppInitializer.usersRepository.create(
+        User(
+          name: usernameController.text,
+          username: usernameController.text,
+          password: passwordController.text,
+          email: emailController.text,
+          phone: phoneController.text,
+          document: documentController.text,
+        ),
+      );
+      if (userCreatedId != null) {
+        showSuccesDialog = true;
+        notifyListeners();
+      } else {
+        print('Falha ao criar usuário');
+      }
+    } catch (e) {
+      print('Erro ao criar usuário: $e');
+    }
   }
   // Criar um usuário
 

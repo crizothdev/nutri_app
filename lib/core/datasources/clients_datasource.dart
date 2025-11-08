@@ -12,12 +12,18 @@ class ClientsDatasource {
     required String name,
     String? email,
     String? notes,
+    String? phone,
+    String? weight,
+    String? height,
   }) async {
     return await _db.insertData(tableName, {
       'user_id': userId,
       'name': name,
       'email': email,
       'notes': notes,
+      'phone': phone,
+      'weight': weight,
+      'height': height,
     });
   }
 

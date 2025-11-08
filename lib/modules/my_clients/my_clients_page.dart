@@ -13,6 +13,17 @@ class MyClientsPage extends StatefulWidget {
 
 class _MyClientsPageState extends State<MyClientsPage> {
   final controller = MyClientsController();
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final phoneController = TextEditingController();
+  final weightController = TextEditingController();
+  final heightController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    controller.fetchClients();
+  }
 
   @override
   void dispose() {
@@ -24,30 +35,29 @@ class _MyClientsPageState extends State<MyClientsPage> {
     return showModalBottomSheet(
         context: context,
         builder: (context) {
-          final nameController = TextEditingController();
-          final emailController = TextEditingController();
-          final phoneController = TextEditingController();
-          final weightController = TextEditingController();
-          final heightController = TextEditingController();
-
           return Container(
             padding: const EdgeInsets.all(16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
+                  controller: nameController,
                   decoration: InputDecoration(labelText: 'Nome'),
                 ),
                 TextField(
+                  controller: emailController,
                   decoration: InputDecoration(labelText: 'E-mail'),
                 ),
                 TextField(
+                  controller: phoneController,
                   decoration: InputDecoration(labelText: 'Telefone'),
                 ),
                 TextField(
+                  controller: weightController,
                   decoration: InputDecoration(labelText: 'Peso'),
                 ),
                 TextField(
+                  controller: heightController,
                   decoration: InputDecoration(labelText: 'Altura'),
                 ),
                 SizedBox(height: 16),
@@ -98,13 +108,14 @@ class _MyClientsPageState extends State<MyClientsPage> {
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(22),
-            child: Column(
-              spacing: 12,
-              children: [
-                ClientCard(),
-                ClientCard(),
-                ClientCard(),
-              ],
+            child: ListView.separated(
+              itemCount: state.clientes.length,
+              itemBuilder: (context, index) {
+                return ClientCard(client: state.clientes[index]);
+              },
+              separatorBuilder: (context, index) {
+                return SizedBox(height: 12);
+              },
             ),
           ),
         );
@@ -114,12 +125,13 @@ class _MyClientsPageState extends State<MyClientsPage> {
 }
 
 class ClientCard extends StatelessWidget {
-  const ClientCard({super.key});
+  final Client client;
+  const ClientCard({super.key, required this.client});
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => goClientsDetail(),
+      onTap: () => goClientsDetail(client),
       child: Container(
         padding: const EdgeInsets.all(22),
         decoration: BoxDecoration(
@@ -130,7 +142,7 @@ class ClientCard extends StatelessWidget {
           children: [
             CircleAvatar(),
             SizedBox(width: 10),
-            Text('Cliente 1'),
+            Text(client.name),
           ],
         ),
       ),

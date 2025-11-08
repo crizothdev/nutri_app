@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:nutri_app/core/models/user.dart';
 
 import 'package:nutri_app/modules/home/home_controller.dart';
 import 'package:nutri_app/routes.dart';
@@ -70,7 +71,9 @@ class ScheduleModel {
 }
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final User? user;
+
+  const HomePage({super.key, this.user});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -78,6 +81,14 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final controller = HomeController();
+
+  @override
+  void initState() {
+    if (widget.user != null) {
+      controller.setUser(widget.user!);
+    }
+    super.initState();
+  }
 
   @override
   void dispose() {

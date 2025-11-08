@@ -89,4 +89,12 @@ class UserDatasource {
       throw Exception('Senha não pode ser vazia.');
     }
   }
+
+  makeLogin(String username, String password) async {
+    final user = await getUserByUsername(username);
+    if (user == null || user['password'] != password) {
+      throw Exception('Credenciais inválidas.');
+    }
+    return user;
+  }
 }

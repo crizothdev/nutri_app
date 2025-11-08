@@ -1,19 +1,46 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:nutri_app/app_initializer.dart';
 import 'package:nutri_app/core/models/client.dart';
 
 class MyClientsController extends ChangeNotifier {
-  bool _isLoading = false;
-  toggleLoading(bool val) {
-    _isLoading = !_isLoading;
+  final clientsRepo = AppInitializer.clientsRepository;
+
+  List<Client> clientes = <Client>[];
+
+  bool isLoading = false;
+  toggleLoading([bool? val]) {
+    isLoading = val ?? !isLoading;
     notifyListeners();
   }
 
-  bool get isLoading => _isLoading == true;
-
   createClient(Client client) async {
     toggleLoading(true);
-    await Future.delayed(const Duration(seconds: 2));
-    // Lógica para salvar o cliente
+    try {
+      final newClientId = await clientsRepo.create(
+          userId: AppInitializer.appInfo.currentUser!.id!, client: client);
+
+      print('newClientId $newClientId');
+    } catch (e) {
+      print('Error creating client: $e');
+    }
     toggleLoading(false);
+  }
+
+  fetchClients() async {
+    toggleLoading(true);
+    try {
+      clientsRepo
+          .list(userId: AppInitializer.appInfo.currentUser!.id!)
+          .then((value) {
+        clientes = value;
+        toggleLoading(false);
+      });
+    } catch (e) {
+      print('Error fetching clients: $e');
+    } finally {
+      toggleLoading(false);
+    }
   }
 }

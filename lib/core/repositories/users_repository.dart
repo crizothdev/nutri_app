@@ -6,4 +6,5 @@ abstract class UsersRepository {
   Future<User?> byUsername(String username);
   Future<void> updatePassword(int userId, String newPassword);
   Future<void> delete(int userId);
+  Future<User> makeLogin(String username, String password);
 }

@@ -12,12 +12,15 @@ class ClientsRepositoryImpl implements ClientsRepository {
   }
 
   @override
-  Future<int> create(Client client) async {
+  Future<int> create({required int userId, required Client client}) async {
     return await _ds.createClient(
-      userId: client.userId,
+      userId: userId,
       name: client.name,
       email: client.email,
-      notes: client.notes,
+      phone: client.phone,
+      weight: client.weight,
+      height: client.height,
+      notes: "",
     );
   }
 

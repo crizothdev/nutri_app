@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class FoodMenusController extends ChangeNotifier {
+class ClientMenusController extends ChangeNotifier {
   bool _isLoading = false;
   toggleLoading(bool val) {
     _isLoading = !_isLoading;

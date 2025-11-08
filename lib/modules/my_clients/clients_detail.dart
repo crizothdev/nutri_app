@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:nutri_app/core/models/client.dart';
 import 'package:nutri_app/modules/profile/profile_controller.dart';
+import 'package:nutri_app/routes.dart';
 import 'package:nutri_app/widgets/statefull_wrapper.dart';
 // import 'package:nutri_app/routes.dart'; // Removido, pois a edição será local
 
 class ClientsDetail extends StatefulWidget {
-  const ClientsDetail({super.key});
+  final Client client;
+  const ClientsDetail({super.key, required this.client});
 
   @override
   State<ClientsDetail> createState() => _ClientsDetailState();
@@ -27,6 +30,8 @@ class _ClientsDetailState extends State<ClientsDetail> {
     controller.dispose();
     super.dispose();
   }
+
+  Client get client => widget.client;
 
   @override
   Widget build(BuildContext context) {
@@ -78,16 +83,15 @@ class _ClientsDetailState extends State<ClientsDetail> {
 
                     // CAMPOS: Passando o _isEditing para controlar a edição
                     _buildLabel('Nome'),
-                    _buildField('Ana Carolina Fernandes',
-                        isEnabled: _isEditing),
+                    _buildField(client.name, isEnabled: _isEditing),
                     _buildLabel('E-mail'),
-                    _buildField('ana.carolina@mail.com', isEnabled: _isEditing),
+                    _buildField(client.email ?? '', isEnabled: _isEditing),
                     _buildLabel('Telefone'),
-                    _buildField('(12) 99100-0000', isEnabled: _isEditing),
+                    _buildField(client.phone ?? '', isEnabled: _isEditing),
                     _buildLabel('Peso (Kg)'),
-                    _buildField('58 Kg', isEnabled: _isEditing),
+                    _buildField('${client.weight} Kg', isEnabled: _isEditing),
                     _buildLabel('Altura (m)'),
-                    _buildField('1.67 cm', isEnabled: _isEditing),
+                    _buildField('${client.height} m', isEnabled: _isEditing),
                     const SizedBox(height: 100),
                   ],
                 ),
@@ -156,13 +160,23 @@ class _ClientsDetailState extends State<ClientsDetail> {
                       topRight: Radius.circular(20),
                     ),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      Icon(Icons.bar_chart, color: Colors.white, size: 28),
-                      Icon(Icons.home, color: Colors.white, size: 28),
-                      Icon(Icons.chat_bubble_outline,
-                          color: Colors.white, size: 28),
+                      IconButton(
+                        icon: Icon(Icons.restaurant_outlined,
+                            color: Colors.white, size: 28),
+                        onPressed: () => goClientMenus(client),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.home, color: Colors.white, size: 28),
+                        onPressed: () => goHome(),
+                      ),
+                      IconButton(
+                          icon: Icon(Icons.chat_bubble_outline,
+                              color: Colors.white, size: 28),
+                          onPressed: null // () => goChat(client),
+                          ),
                     ],
                   ),
                 ),

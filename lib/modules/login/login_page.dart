@@ -32,6 +32,8 @@ class _LoginPageState extends State<LoginPage> {
     final TextEditingController usernameController = TextEditingController();
     final TextEditingController passwordController = TextEditingController();
     return NotifierScaffold<LoginController>(
+      resizeToAvoidBottomInset: true,
+
       /// Vincula o estado ao NotifierScaffold para atualização automática da UI
       state: controller,
 
@@ -41,18 +43,14 @@ class _LoginPageState extends State<LoginPage> {
 
       /// Builder que constrói o layout principal da tela.
       builder: (context, state) {
-        return Center(
-          /// Padding para adicionar espaçamento horizontal,
-          /// evitando que os elementos fiquem grudados nas bordas da tela.
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 60),
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 60),
 
-            /// Coluna principal que organiza todos os elementos verticalmente.
+          /// Coluna principal que organiza todos os elementos verticalmente.
+          child: SingleChildScrollView(
             child: Column(
               children: [
-                /// Espaço no topo proporcional ao tamanho da tela,
-                /// ajusta a posição dos elementos independentemente do dispositivo.
-                SizedBox(height: MediaQuery.of(context).size.height / 8),
+                SizedBox(height: 80),
 
                 /// Logo do aplicativo, vindo dos assets.
                 /// `scale: 2` reduz o tamanho proporcional da imagem.
@@ -120,7 +118,11 @@ class _LoginPageState extends State<LoginPage> {
                         child: FilledButton(
                           onPressed: () {
                             /// Aqui será implementada a lógica de autenticação.
-                            goHome();
+                            state.makeLogin(
+                              usernameController.text,
+                              passwordController.text,
+                            );
+                            // goHome();
                           },
                           style: FilledButton.styleFrom(
                             shape: RoundedRectangleBorder(

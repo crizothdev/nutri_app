@@ -5,6 +5,7 @@ class NotifierScaffold<S extends ChangeNotifier> extends StatelessWidget {
   bool isLoading;
   final PreferredSizeWidget? appBar;
   final Widget? floatingActionButton;
+  bool resizeToAvoidBottomInset = false;
   final Widget Function(BuildContext context, S state) builder;
 
   NotifierScaffold({
@@ -14,6 +15,7 @@ class NotifierScaffold<S extends ChangeNotifier> extends StatelessWidget {
     this.appBar,
     this.floatingActionButton,
     this.isLoading = false,
+    this.resizeToAvoidBottomInset = false,
   });
 
   @override
@@ -23,6 +25,7 @@ class NotifierScaffold<S extends ChangeNotifier> extends StatelessWidget {
       builder: (context, _) {
         final loading = isLoading;
         return Scaffold(
+          resizeToAvoidBottomInset: resizeToAvoidBottomInset,
           appBar: appBar,
           floatingActionButton: floatingActionButton,
           body: loading

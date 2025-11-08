@@ -1,3 +1,5 @@
+import 'package:nutri_app/app_info.dart';
+import 'package:nutri_app/core/models/user.dart';
 import 'package:nutri_app/core/services/database_service.dart';
 import 'package:nutri_app/core/repositories/impl/users_repository_impl.dart';
 import 'package:nutri_app/core/repositories/impl/clients_repository_impl.dart';
@@ -12,6 +14,7 @@ import 'package:nutri_app/core/data/alimentos_com_imagens.dart' as data;
 class AppInitializer {
   static bool _inited = false;
   static late final LocalDatabaseService db;
+  static late AppInfo appInfo;
 
   static late final UsersRepositoryImpl usersRepository;
   static late final ClientsRepositoryImpl clientsRepository;
@@ -27,6 +30,7 @@ class AppInitializer {
     db = LocalDatabaseService();
     await db.openDB();
 
+    appInfo = AppInfo();
     usersRepository = UsersRepositoryImpl(db);
     clientsRepository = ClientsRepositoryImpl(db);
     foodsRepository = FoodsRepositoryImpl(db);
