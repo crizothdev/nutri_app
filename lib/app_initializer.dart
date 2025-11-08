@@ -4,7 +4,6 @@ import 'package:nutri_app/core/services/database_service.dart';
 import 'package:nutri_app/core/repositories/impl/users_repository_impl.dart';
 import 'package:nutri_app/core/repositories/impl/clients_repository_impl.dart';
 import 'package:nutri_app/core/repositories/impl/foods_repository_impl.dart';
-import 'package:nutri_app/core/repositories/impl/meals_repository_impl.dart';
 import 'package:nutri_app/core/repositories/impl/menus_repository_impl.dart';
 import 'package:nutri_app/core/repositories/impl/schedules_repository_impl.dart';
 import 'package:sqflite/sqflite.dart';
@@ -19,7 +18,6 @@ class AppInitializer {
   static late final UsersRepositoryImpl usersRepository;
   static late final ClientsRepositoryImpl clientsRepository;
   static late final FoodsRepositoryImpl foodsRepository;
-  static late final MealsRepositoryImpl mealsRepository;
   static late final MenusRepositoryImpl menusRepository;
   static late final SchedulesRepositoryImpl schedulesRepository;
 
@@ -34,7 +32,6 @@ class AppInitializer {
     usersRepository = UsersRepositoryImpl(db);
     clientsRepository = ClientsRepositoryImpl(db);
     foodsRepository = FoodsRepositoryImpl(db);
-    mealsRepository = MealsRepositoryImpl(db);
     menusRepository = MenusRepositoryImpl(db);
     schedulesRepository = SchedulesRepositoryImpl(db);
 

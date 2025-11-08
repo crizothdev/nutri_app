@@ -45,6 +45,7 @@ class _SignupPageState extends State<SignupPage> {
     final TextEditingController usernameController = TextEditingController();
     final TextEditingController passwordController = TextEditingController();
     return NotifierScaffold<SignupController>(
+      resizeToAvoidBottomInset: true,
       state: controller,
       isLoading: controller.isLoading,
       builder: (context, state) {
@@ -55,104 +56,106 @@ class _SignupPageState extends State<SignupPage> {
           });
         }
 
-        return Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 60),
-            child: Column(
-              children: [
-                SizedBox(height: 26),
-                Image.asset(
-                  'assets/images/splash_image.png',
-                  scale: 4,
-                ),
-                Row(
-                  children: const [
-                    Text('Nome de usuário'),
-                  ],
-                ),
-                OutlinedTextField(
-                  hintText: 'Digite algo',
-                  labelText: 'meu apelido',
-                  controller: state.usernameController,
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: const [
-                    Text('Senha'),
-                  ],
-                ),
-                OutlinedTextField(
-                  hintText: 'Digite algo',
-                  labelText: '*******',
-                  controller: state.passwordController,
-                  obscureText: true,
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: const [
-                    Text('Nome completo'),
-                  ],
-                ),
-                OutlinedTextField(
-                  hintText: 'Digite algo',
-                  labelText: 'nome completo',
-                  controller: state.nameController,
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: const [
-                    Text('email'),
-                  ],
-                ),
-                OutlinedTextField(
-                  hintText: 'Digite algo',
-                  labelText: 'meu@email.com',
-                  controller: state.emailController,
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: const [
-                    Text('Número de telefone'),
-                  ],
-                ),
-                OutlinedTextField(
-                  hintText: 'Digite algo',
-                  labelText: '12 99596 2256',
-                  controller: state.phoneController,
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: const [
-                    Text('Documento de identificação'),
-                  ],
-                ),
-                OutlinedTextField(
-                  hintText: 'Digite algo',
-                  labelText: '000.000.000.00',
-                  controller: state.documentController,
-                ),
-                SizedBox(height: 22),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 40),
-                        child: FilledButton(
-                          onPressed: () {
-                            state.createUser();
-                          },
-                          style: FilledButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6),
+        return SingleChildScrollView(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 60),
+              child: Column(
+                children: [
+                  SizedBox(height: 26),
+                  Image.asset(
+                    'assets/images/splash_image.png',
+                    scale: 4,
+                  ),
+                  Row(
+                    children: const [
+                      Text('Nome de usuário'),
+                    ],
+                  ),
+                  OutlinedTextField(
+                    hintText: 'Digite algo',
+                    labelText: 'meu apelido',
+                    controller: state.usernameController,
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: const [
+                      Text('Senha'),
+                    ],
+                  ),
+                  OutlinedTextField(
+                    hintText: 'Digite algo',
+                    labelText: '*******',
+                    controller: state.passwordController,
+                    obscureText: true,
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: const [
+                      Text('Nome completo'),
+                    ],
+                  ),
+                  OutlinedTextField(
+                    hintText: 'Digite algo',
+                    labelText: 'nome completo',
+                    controller: state.nameController,
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: const [
+                      Text('email'),
+                    ],
+                  ),
+                  OutlinedTextField(
+                    hintText: 'Digite algo',
+                    labelText: 'meu@email.com',
+                    controller: state.emailController,
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: const [
+                      Text('Número de telefone'),
+                    ],
+                  ),
+                  OutlinedTextField(
+                    hintText: 'Digite algo',
+                    labelText: '12 99596 2256',
+                    controller: state.phoneController,
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: const [
+                      Text('Documento de identificação'),
+                    ],
+                  ),
+                  OutlinedTextField(
+                    hintText: 'Digite algo',
+                    labelText: '000.000.000.00',
+                    controller: state.documentController,
+                  ),
+                  SizedBox(height: 22),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 40),
+                          child: FilledButton(
+                            onPressed: () {
+                              state.createUser();
+                            },
+                            style: FilledButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
                             ),
+                            child: const Text('Registrar'),
                           ),
-                          child: const Text('Registrar'),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );

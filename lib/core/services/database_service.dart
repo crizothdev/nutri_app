@@ -1,14 +1,109 @@
 import 'package:sqflite/sqflite.dart';
 
-enum TableNames {
-  users,
-  clients,
-  menus,
-  client_menus,
-  meals,
-  foods,
-  meal_foods,
-  schedules,
+/// Centraliza nomes de tabelas e instruções SQL.
+class SQLStrings {
+  // --------- TABLE NAMES ---------
+  static const tUsers = 'users';
+  static const tClients = 'clients';
+  static const tMenus = 'menus';
+  static const tClientMenus = 'client_menus';
+  static const tFoods = 'foods';
+  static const tSchedules = 'schedules';
+
+  // --------- CREATE TABLES ---------
+  static String createUsers() => '''
+    CREATE TABLE $tUsers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
+      username TEXT NOT NULL,
+      password TEXT NOT NULL,
+      email TEXT,
+      phone TEXT,
+      document TEXT
+    )
+  ''';
+
+  static String uxUsersUsername() =>
+      'CREATE UNIQUE INDEX IF NOT EXISTS ux_${tUsers}_username ON $tUsers(username)';
+
+  static String uxUsersDocument() =>
+      'CREATE UNIQUE INDEX IF NOT EXISTS ux_${tUsers}_document ON $tUsers(document)';
+
+  static String createClients() => '''
+    CREATE TABLE $tClients (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      name TEXT,
+      email TEXT,
+      phone TEXT,
+      weight TEXT,
+      height TEXT,
+      notes TEXT,
+      FOREIGN KEY (user_id) REFERENCES $tUsers(id) ON DELETE CASCADE
+    )
+  ''';
+
+  /// MENUS com meals embutidas em JSON
+  static String createMenus() => '''
+    CREATE TABLE $tMenus (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT,
+      target_kcal INTEGER,
+      meals_json TEXT NOT NULL DEFAULT '[]' -- [{title,description,foodIds:[...]}]
+    )
+  ''';
+
+  /// Relação N:N entre clients e menus
+  static String createClientMenus() => '''
+    CREATE TABLE $tClientMenus (
+      client_id INTEGER NOT NULL,
+      menu_id INTEGER NOT NULL,
+      PRIMARY KEY (client_id, menu_id),
+      FOREIGN KEY (client_id) REFERENCES $tClients(id) ON DELETE CASCADE,
+      FOREIGN KEY (menu_id) REFERENCES $tMenus(id) ON DELETE CASCADE
+    )
+  ''';
+
+  /// Catálogo de alimentos
+  static String createFoods() => '''
+    CREATE TABLE $tFoods (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      code TEXT UNIQUE,
+      name TEXT,
+      default_portion TEXT,
+      kcal_per_portion REAL,
+      calories INTEGER -- kcal (opcional)
+    )
+  ''';
+
+  /// Agenda (desnormalizada)
+  static String createSchedules() => '''
+    CREATE TABLE $tSchedules (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      client_id INTEGER NULL,
+      patient_name TEXT NOT NULL,
+      phone_number TEXT,
+      date_iso TEXT NOT NULL,     -- "YYYY-MM-DD"
+      start_time TEXT NOT NULL,   -- "HH:mm"
+      end_time TEXT NOT NULL,     -- "HH:mm"
+      title TEXT,
+      description TEXT,
+      status TEXT DEFAULT 'scheduled',
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (client_id) REFERENCES $tClients(id) ON DELETE SET NULL
+    )
+  ''';
+
+  // --------- INDEXES ---------
+  static String idxSchedulesDate() =>
+      'CREATE INDEX IF NOT EXISTS idx_${tSchedules}_date ON $tSchedules(date_iso)';
+
+  static String idxSchedulesDateStart() =>
+      'CREATE INDEX IF NOT EXISTS idx_${tSchedules}_date_start ON $tSchedules(date_iso, start_time)';
+
+  static String idxClientMenusClient() =>
+      'CREATE INDEX IF NOT EXISTS idx_${tClientMenus}_client ON $tClientMenus(client_id)';
 }
 
 class LocalDatabaseService {
@@ -17,223 +112,44 @@ class LocalDatabaseService {
   Future<Database> openDB() async {
     database = await openDatabase(
       'nutri_app_database.db',
-      version: 2,
-      onCreate: (Database db, int version) async {
-        await createTables(db);
-      },
-      onUpgrade: (db, oldV, newV) async {
-        // Mantido por compatibilidade, mas você vai resetar o cache.
-        if (oldV < 2) {
-          await _migrateToV2(db);
-        }
-      },
+      version: 1,
+      onCreate: (db, _) async => createTables(db),
     );
-
     return database;
   }
 
-  Future<void> createTables(Database database) async {
-    // users
-    await database.execute('''
-      CREATE TABLE users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        username TEXT NOT NULL,
-        password TEXT NOT NULL,
-        email TEXT,
-        phone TEXT,
-        document TEXT
-      )
-    ''');
-    await database.execute(
-        'CREATE UNIQUE INDEX IF NOT EXISTS ux_users_username ON users(username)');
-    await database.execute(
-        'CREATE UNIQUE INDEX IF NOT EXISTS ux_users_document ON users(document)');
+  Future<void> createTables(Database db) async {
+    await db.execute(SQLStrings.createUsers());
+    await db.execute(SQLStrings.uxUsersUsername());
+    await db.execute(SQLStrings.uxUsersDocument());
 
-    // clients
-    await database.execute('''
-      CREATE TABLE clients (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        name TEXT,
-        email TEXT,
-        phone TEXT,
-        weight TEXT,
-        height TEXT,
-        notes TEXT,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      )
-    ''');
+    await db.execute(SQLStrings.createClients());
 
-    // menus
-    await database.execute('''
-      CREATE TABLE menus (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT,
-        target_kcal INTEGER
-      )
-    ''');
+    await db.execute(SQLStrings.createMenus());
+    await db.execute(SQLStrings.createClientMenus());
 
-    // client_menus (N:N)
-    await database.execute('''
-      CREATE TABLE client_menus (
-        client_id INTEGER NOT NULL,
-        menu_id INTEGER NOT NULL,
-        PRIMARY KEY (client_id, menu_id),
-        FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
-        FOREIGN KEY (menu_id) REFERENCES menus(id) ON DELETE CASCADE
-      )
-    ''');
+    await db.execute(SQLStrings.createFoods());
 
-    // meals
-    await database.execute('''
-      CREATE TABLE meals (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        menu_id INTEGER NOT NULL,
-        name TEXT,
-        order_index INTEGER,
-        FOREIGN KEY (menu_id) REFERENCES menus(id) ON DELETE CASCADE
-      )
-    ''');
-
-    // foods
-    await database.execute('''
-      CREATE TABLE foods (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        code TEXT UNIQUE,
-        name TEXT,
-        default_portion TEXT,
-        kcal_per_portion REAL
-      )
-    ''');
-
-    // meal_foods
-    await database.execute('''
-      CREATE TABLE meal_foods (
-        meal_id INTEGER NOT NULL,
-        food_id INTEGER NOT NULL,
-        quantity REAL,
-        kcal_total REAL,
-        notes TEXT,
-        PRIMARY KEY (meal_id, food_id),
-        FOREIGN KEY (meal_id) REFERENCES meals(id) ON DELETE CASCADE,
-        FOREIGN KEY (food_id) REFERENCES foods(id) ON DELETE RESTRICT
-      )
-    ''');
-
-    // ---------------------------
-    // schedules (DESNORMALIZADA)
-    // ---------------------------
-    await database.execute('''
-      CREATE TABLE schedules (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        client_id INTEGER NULL,
-        patient_name TEXT NOT NULL,
-        phone_number TEXT,
-        date_iso TEXT NOT NULL,     -- "YYYY-MM-DD"
-        start_time TEXT NOT NULL,   -- "HH:mm"
-        end_time TEXT NOT NULL,     -- "HH:mm"
-        title TEXT,
-        description TEXT,
-        status TEXT DEFAULT 'scheduled',
-        created_at TEXT DEFAULT (datetime('now')),
-        updated_at TEXT DEFAULT (datetime('now')),
-        FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL
-      )
-    ''');
-
-    // Índices úteis para calendário e ordenação
-    await database.execute(
-        'CREATE INDEX IF NOT EXISTS idx_schedules_date ON schedules(date_iso)');
-    await database.execute(
-        'CREATE INDEX IF NOT EXISTS idx_schedules_date_start ON schedules(date_iso, start_time)');
-
-    // Índices já existentes
-    await database
-        .execute('CREATE INDEX IF NOT EXISTS idx_meals_menu ON meals(menu_id)');
-    await database.execute(
-        'CREATE INDEX IF NOT EXISTS idx_mealfoods_meal ON meal_foods(meal_id)');
-    await database.execute(
-        'CREATE INDEX IF NOT EXISTS idx_clientmenus_client ON client_menus(client_id)');
-  }
-
-  // Mantido caso precise subir de v1 -> v2 em algum cenário
-  Future<void> _migrateToV2(Database db) async {
-    // Exemplo anterior preservado. Como você reseta o cache, não é necessário.
-    final schedulesInfo = await db.rawQuery("PRAGMA table_info('schedules')");
-    final hasTitle = schedulesInfo.any((c) => (c['name'] as String) == 'title');
-    if (!hasTitle) {
-      await db.execute("ALTER TABLE schedules ADD COLUMN title TEXT");
-    }
-
-    final menusInfo = await db.rawQuery("PRAGMA table_info('menus')");
-    final hadClientId =
-        menusInfo.any((c) => (c['name'] as String) == 'client_id');
-
-    if (hadClientId) {
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS client_menus (
-          client_id INTEGER NOT NULL,
-          menu_id INTEGER NOT NULL,
-          PRIMARY KEY (client_id, menu_id),
-          FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
-          FOREIGN KEY (menu_id) REFERENCES menus(id) ON DELETE CASCADE
-        )
-      ''');
-
-      final rows = await db.rawQuery(
-          'SELECT id, client_id FROM menus WHERE client_id IS NOT NULL');
-      final batch = db.batch();
-      for (final r in rows) {
-        batch.insert(
-          'client_menus',
-          {
-            'client_id': r['client_id'],
-            'menu_id': r['id'],
-          },
-          conflictAlgorithm: ConflictAlgorithm.ignore,
-        );
-      }
-      await batch.commit(noResult: true);
-
-      await db.execute('ALTER TABLE menus RENAME TO menus_old');
-      await db.execute('''
-        CREATE TABLE menus (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          title TEXT,
-          target_kcal INTEGER
-        )
-      ''');
-      await db.execute('''
-        INSERT INTO menus (id, title, target_kcal)
-        SELECT id, title, target_kcal FROM menus_old
-      ''');
-      await db.execute('DROP TABLE menus_old');
-    }
-
-    await db
-        .execute('CREATE INDEX IF NOT EXISTS idx_meals_menu ON meals(menu_id)');
-    await db.execute(
-        'CREATE INDEX IF NOT EXISTS idx_mealfoods_meal ON meal_foods(meal_id)');
-    await db.execute(
-        'CREATE INDEX IF NOT EXISTS idx_clientmenus_client ON client_menus(client_id)');
+    await db.execute(SQLStrings.createSchedules());
+    await db.execute(SQLStrings.idxSchedulesDate());
+    await db.execute(SQLStrings.idxSchedulesDateStart());
+    await db.execute(SQLStrings.idxClientMenusClient());
   }
 
   // ---------------------------
-  // CRUD genéricos
+  // CRUD genéricos (table = nome da tabela)
   // ---------------------------
-
   Future<int> insertData(
-    TableNames table,
+    String table,
     Map<String, dynamic> data, {
     ConflictAlgorithm conflictAlgorithm = ConflictAlgorithm.abort,
   }) async {
-    return await database.insert(table.name, data,
+    return await database.insert(table, data,
         conflictAlgorithm: conflictAlgorithm);
   }
 
   Future<List<Map<String, dynamic>>> getData(
-    TableNames table, {
+    String table, {
     List<String>? columns,
     String? where,
     List<Object?>? whereArgs,
@@ -243,7 +159,7 @@ class LocalDatabaseService {
     bool distinct = false,
   }) async {
     return await database.query(
-      table.name,
+      table,
       columns: columns,
       where: where,
       whereArgs: whereArgs,
@@ -255,14 +171,14 @@ class LocalDatabaseService {
   }
 
   Future<int> updateData(
-    TableNames table,
+    String table,
     Map<String, dynamic> data, {
     required String where,
     required List<Object?> whereArgs,
     ConflictAlgorithm conflictAlgorithm = ConflictAlgorithm.abort,
   }) async {
     return await database.update(
-      table.name,
+      table,
       data,
       where: where,
       whereArgs: whereArgs,
@@ -271,7 +187,7 @@ class LocalDatabaseService {
   }
 
   Future<int> updateById(
-    TableNames table,
+    String table,
     Map<String, dynamic> data, {
     int? id,
     ConflictAlgorithm conflictAlgorithm = ConflictAlgorithm.abort,
@@ -290,17 +206,16 @@ class LocalDatabaseService {
     );
   }
 
-  Future<int> deleteData(TableNames table, int id) async {
-    return await database.delete(table.name, where: 'id = ?', whereArgs: [id]);
+  Future<int> deleteData(String table, int id) async {
+    return await database.delete(table, where: 'id = ?', whereArgs: [id]);
   }
 
   Future<int> deleteWhere(
-    TableNames table, {
+    String table, {
     required String where,
     required List<Object?> whereArgs,
   }) async {
-    return await database.delete(table.name,
-        where: where, whereArgs: whereArgs);
+    return await database.delete(table, where: where, whereArgs: whereArgs);
   }
 
   Future<List<Map<String, Object?>>> rawQuery(String sql,
@@ -316,9 +231,7 @@ class LocalDatabaseService {
     return database.transaction(action);
   }
 
-  Future<void> close() async {
-    await database.close();
-  }
+  Future<void> close() async => database.close();
 
   bool get isOpen => database.isOpen;
 }

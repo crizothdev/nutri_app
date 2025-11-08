@@ -5,7 +5,7 @@ class Food {
   final String code;
   final String name;
   final String defaultPortion;
-  final double kcalPerPortion;
+  final double calories; // kcal por porção padrão
 
   // Não persistidos (úteis para a UI quando vierem do JSON do app)
   final List<String>? categorias;
@@ -17,7 +17,7 @@ class Food {
     required this.code,
     required this.name,
     required this.defaultPortion,
-    required this.kcalPerPortion,
+    required this.calories,
     this.categorias,
     this.description,
     this.imgUrl,
@@ -28,7 +28,7 @@ class Food {
     String? code,
     String? name,
     String? defaultPortion,
-    double? kcalPerPortion,
+    double? calories,
     List<String>? categorias,
     String? description,
     String? imgUrl,
@@ -38,18 +38,20 @@ class Food {
         code: code ?? this.code,
         name: name ?? this.name,
         defaultPortion: defaultPortion ?? this.defaultPortion,
-        kcalPerPortion: kcalPerPortion ?? this.kcalPerPortion,
+        calories: calories ?? this.calories,
         categorias: categorias ?? this.categorias,
         description: description ?? this.description,
         imgUrl: imgUrl ?? this.imgUrl,
       );
 
+  /// Mapa para persistência no DB (tabela `foods`):
+  /// columns: id, code, name, default_portion, calories
   Map<String, dynamic> toMap() => {
         if (id != null) 'id': id,
         'code': code,
         'name': name,
         'default_portion': defaultPortion,
-        'kcal_per_portion': kcalPerPortion,
+        'calories': calories,
       };
 
   factory Food.fromMap(Map<String, dynamic> m) => Food(
@@ -57,27 +59,35 @@ class Food {
         code: m['code'] as String,
         name: m['name'] as String,
         defaultPortion: m['default_portion'] as String,
-        kcalPerPortion: (m['kcal_per_portion'] as num).toDouble(),
+        calories: (m['calories'] as num).toDouble(),
       );
 
   /// Mapper útil para o JSON de `alimentos_com_imagens.dart`
   /// Exemplo de entrada:
-  /// { "nome":"Arroz branco","porcao":"100g","categorias":[...],"description":"...","imgUrl":"..." }
+  /// { "nome":"Arroz branco","porcao":"100g","categorias":[...],"description":"...","imgUrl":"...","calories":130 }
   /// - `code`: slug do nome
-  /// - `kcal`: não vem; default 0.0 (atualize quando necessário)
+  /// - `calories`: aceita `calories` (preferido) ou `kcal_per_portion`/`kcal` como fallback
   factory Food.fromAppJson(Map<String, dynamic> j) => Food(
         code: _slug(j['nome'] ?? j['name'] ?? 'food'),
         name: (j['nome'] ?? j['name'] ?? '').toString(),
         defaultPortion: (j['porcao'] ?? j['default_portion'] ?? '').toString(),
-        kcalPerPortion: (j['kcal_per_portion'] is num)
-            ? (j['kcal_per_portion'] as num).toDouble()
-            : 0.0,
+        calories: _parseCalories(j),
         categorias: (j['categorias'] is List)
             ? (j['categorias'] as List).map((e) => '$e').toList()
             : null,
         description: j['description']?.toString(),
         imgUrl: j['imgUrl']?.toString(),
       );
+
+  static double _parseCalories(Map<String, dynamic> j) {
+    final v = j['calories'] ?? j['kcal_per_portion'] ?? j['kcal'];
+    if (v is num) return v.toDouble();
+    if (v is String) {
+      final parsed = double.tryParse(v.replaceAll(',', '.'));
+      if (parsed != null) return parsed;
+    }
+    return 0.0;
+  }
 
   static String _slug(String s) => s
       .toLowerCase()

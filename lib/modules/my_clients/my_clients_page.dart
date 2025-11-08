@@ -33,10 +33,19 @@ class _MyClientsPageState extends State<MyClientsPage> {
 
   createNewClient() {
     return showModalBottomSheet(
-        context: context,
-        builder: (context) {
-          return Container(
-            padding: const EdgeInsets.all(16),
+      context: context,
+      isScrollControlled: true, // ✅ permite abrir acima do teclado
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context)
+                .viewInsets
+                .bottom, // ✅ empurra quando teclado aparece
+            left: 16,
+            right: 16,
+            top: 16,
+          ),
+          child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -72,13 +81,17 @@ class _MyClientsPageState extends State<MyClientsPage> {
                         height: heightController.text,
                       ),
                     );
+                    Navigator.pop(context); // ✅ fecha modal após criar
                   },
                   child: Text('Criar Cliente'),
                 ),
+                SizedBox(height: 16),
               ],
             ),
-          );
-        });
+          ),
+        );
+      },
+    );
   }
 
   @override

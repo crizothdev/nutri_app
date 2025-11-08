@@ -17,7 +17,7 @@ class FoodsRepositoryImpl implements FoodsRepository {
       code: food.code,
       name: food.name,
       defaultPortion: food.defaultPortion,
-      kcalPerPortion: food.kcalPerPortion,
+      calories: food.calories,
     );
   }
 
@@ -26,7 +26,7 @@ class FoodsRepositoryImpl implements FoodsRepository {
     // Converte JSON do app para o formato do datasource
     final toImport =
         appJson.map((j) => Food.fromAppJson(j)).map((f) => f.toMap()).toList();
-    // FoodsDatasource.importFoodsFromJson espera chaves padrões (code, name, default_portion, kcal_per_portion)
+    // FoodsDatasource.importFoodsFromJson espera chaves: code, name, default_portion, calories
     await _ds.importFoodsFromJson(toImport);
   }
 

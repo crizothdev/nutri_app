@@ -2,7 +2,7 @@ import 'package:nutri_app/core/services/database_service.dart';
 
 class SchedulesDatasource {
   final LocalDatabaseService _db;
-  final tableName = TableNames.schedules;
+  final tableName = SQLStrings.tSchedules;
 
   SchedulesDatasource(this._db);
 
@@ -100,7 +100,7 @@ class SchedulesDatasource {
     final endIsoExclusive = '$ny-$nm-01';
 
     return await _db.rawQuery('''
-      SELECT * FROM ${tableName.name}
+      SELECT * FROM ${tableName}
       WHERE date_iso >= ? AND date_iso < ?
       ORDER BY date_iso ASC, start_time ASC, id ASC
     ''', [startIso, endIsoExclusive]);

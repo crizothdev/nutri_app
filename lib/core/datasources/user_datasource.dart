@@ -5,7 +5,7 @@ class UserDatasource {
   final LocalDatabaseService _db;
 
   UserDatasource(this._db);
-  final tableName = TableNames.users;
+  final tableName = SQLStrings.tUsers;
 
   /// Criar usuário (falha se username já existir)
   Future<int> createUser(User user) async {
@@ -25,7 +25,7 @@ class UserDatasource {
 
   /// Buscar todos os usuários
   Future<List<Map<String, dynamic>>> getAllUsers() async {
-    return await _db.getData(TableNames.users);
+    return await _db.getData(tableName);
   }
 
   /// Buscar usuário por ID
@@ -74,7 +74,7 @@ class UserDatasource {
 
   /// Excluir usuário
   Future<int> deleteUser(int id) async {
-    return await _db.deleteData(TableNames.users, id);
+    return await _db.deleteData(tableName, id);
   }
 
   // --------- helpers ---------

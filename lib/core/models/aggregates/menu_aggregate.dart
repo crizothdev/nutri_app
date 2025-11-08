@@ -1,5 +1,4 @@
 import '../menu.dart';
-import '../meal.dart';
 
 class MealFoodView {
   final int foodId;

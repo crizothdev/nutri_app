@@ -3,7 +3,7 @@ import 'package:nutri_app/core/services/database_service.dart';
 
 class ClientsDatasource {
   final LocalDatabaseService _db;
-  final tableName = TableNames.clients;
+  final tableName = SQLStrings.tClients;
 
   ClientsDatasource(this._db);
 

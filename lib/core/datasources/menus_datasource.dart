@@ -1,20 +1,24 @@
+import 'dart:convert';
+
 import 'package:nutri_app/core/services/database_service.dart';
 import 'package:sqflite/sqflite.dart';
+
+import 'foods_datasource.dart';
 
 class MenusDatasource {
   final LocalDatabaseService _db;
 
-  final menusTable = TableNames.menus;
-  final clientMenusTable = TableNames.client_menus;
-  final mealsTable = TableNames.meals;
-  final foodsTable = TableNames.foods;
-  final mealFoodsTable = TableNames.meal_foods;
+  // Nomes de tabela centralizados na SQLStrings
+  final String menusTable = SQLStrings.tMenus;
+  final String clientMenusTable = SQLStrings.tClientMenus;
+  final String clientsTable = SQLStrings.tClients;
+  // Não existem mais tables de meals/meal_foods
 
   MenusDatasource(this._db);
 
-  /// Cria um menu e associa a N clientes; também cria refeições e insere foods.
-  /// Estrutura:
-  /// title, targetKcal, clientIds, meals: [{name, orderIndex, foods:[{foodId, quantity, notes}]}]
+  /// Cria um menu e associa a N clientes.
+  /// Estrutura esperada:
+  /// title, targetKcal, clientIds, meals: [{title, description?, foodIds: [int,int,...]}]
   Future<int> createMenuWithMeals({
     required String title,
     int? targetKcal,
@@ -22,61 +26,23 @@ class MenusDatasource {
     required List<Map<String, dynamic>> meals,
   }) async {
     return await _db.database.transaction<int>((txn) async {
-      final menuId = await txn.insert(menusTable.name, {
+      final menuId = await txn.insert(menusTable, {
         'title': title,
         'target_kcal': targetKcal,
+        'meals_json': jsonEncode(meals),
       });
 
-      // vincular clientes
-      final linkBatch = txn.batch();
-      for (final cId in clientIds) {
-        linkBatch.insert(
-          clientMenusTable.name,
-          {'client_id': cId, 'menu_id': menuId},
-          conflictAlgorithm: ConflictAlgorithm.ignore,
-        );
-      }
-      await linkBatch.commit(noResult: true);
-
-      // criar meals + meal_foods
-      for (final m in meals) {
-        final mealId = await txn.insert(mealsTable.name, {
-          'menu_id': menuId,
-          'name': m['name'],
-          'order_index': m['orderIndex'] ?? 0,
-        });
-
-        final foods = (m['foods'] as List?) ?? const [];
-        final batchFoods = txn.batch();
-        for (final f in foods) {
-          final int foodId = f['foodId'] as int;
-          final double quantity = (f['quantity'] as num).toDouble();
-
-          final foodRow = await txn.query(
-            foodsTable.name,
-            where: 'id = ?',
-            whereArgs: [foodId],
-            limit: 1,
-          );
-          if (foodRow.isEmpty) continue;
-
-          final kcalPerPortion =
-              (foodRow.first['kcal_per_portion'] as num).toDouble();
-          final kcalTotal = kcalPerPortion * quantity;
-
-          batchFoods.insert(
-            mealFoodsTable.name,
-            {
-              'meal_id': mealId,
-              'food_id': foodId,
-              'quantity': quantity,
-              'kcal_total': kcalTotal,
-              'notes': f['notes'] ?? '',
-            },
-            conflictAlgorithm: ConflictAlgorithm.replace,
+      // vincular clientes (N:N)
+      if (clientIds.isNotEmpty) {
+        final linkBatch = txn.batch();
+        for (final cId in clientIds) {
+          linkBatch.insert(
+            clientMenusTable,
+            {'client_id': cId, 'menu_id': menuId},
+            conflictAlgorithm: ConflictAlgorithm.ignore,
           );
         }
-        await batchFoods.commit(noResult: true);
+        await linkBatch.commit(noResult: true);
       }
 
       return menuId;
@@ -85,10 +51,11 @@ class MenusDatasource {
 
   /// Associa um menu existente a novos clientes (N:N)
   Future<void> linkMenuToClients(int menuId, List<int> clientIds) async {
+    if (clientIds.isEmpty) return;
     final batch = _db.database.batch();
     for (final cId in clientIds) {
       batch.insert(
-        clientMenusTable.name,
+        clientMenusTable,
         {'client_id': cId, 'menu_id': menuId},
         conflictAlgorithm: ConflictAlgorithm.ignore,
       );
@@ -96,7 +63,27 @@ class MenusDatasource {
     await batch.commit(noResult: true);
   }
 
-  /// Duplica um menu (estrutura completa) para outros clientes
+  /// Substitui a lista de clientes vinculados ao menu (remove os antigos e insere os novos)
+  Future<void> setClientsForMenu(int menuId, List<int> clientIds) async {
+    await _db.database.transaction((txn) async {
+      await txn
+          .delete(clientMenusTable, where: 'menu_id = ?', whereArgs: [menuId]);
+      if (clientIds.isNotEmpty) {
+        final batch = txn.batch();
+        for (final cId in clientIds) {
+          batch.insert(
+            clientMenusTable,
+            {'client_id': cId, 'menu_id': menuId},
+            conflictAlgorithm: ConflictAlgorithm.ignore,
+          );
+        }
+        await batch.commit(noResult: true);
+      }
+      return 0;
+    });
+  }
+
+  /// Duplica um menu (incluindo meals_json) para outros clientes
   Future<int> duplicateMenuForClients(
     int sourceMenuId,
     List<int> targetClientIds, {
@@ -104,120 +91,142 @@ class MenusDatasource {
   }) async {
     return await _db.database.transaction<int>((txn) async {
       final menuRow = (await txn.query(
-        menusTable.name,
+        menusTable,
         where: 'id = ?',
         whereArgs: [sourceMenuId],
         limit: 1,
       ))
           .first;
 
-      final newMenuId = await txn.insert(menusTable.name, {
+      final newMenuId = await txn.insert(menusTable, {
         'title': newTitle ?? '${menuRow['title']} (cópia)',
         'target_kcal': menuRow['target_kcal'],
+        'meals_json': menuRow['meals_json'],
       });
 
-      // associar clientes
-      final batchLink = txn.batch();
-      for (final cId in targetClientIds) {
-        batchLink.insert(
-          clientMenusTable.name,
-          {'client_id': cId, 'menu_id': newMenuId},
-          conflictAlgorithm: ConflictAlgorithm.ignore,
-        );
-      }
-      await batchLink.commit(noResult: true);
-
-      // copiar meals
-      final mealsRows = await txn.query(
-        mealsTable.name,
-        where: 'menu_id = ?',
-        whereArgs: [sourceMenuId],
-      );
-
-      for (final m in mealsRows) {
-        final newMealId = await txn.insert(mealsTable.name, {
-          'menu_id': newMenuId,
-          'name': m['name'],
-          'order_index': m['order_index'],
-        });
-
-        final mfRows = await txn.query(
-          mealFoodsTable.name,
-          where: 'meal_id = ?',
-          whereArgs: [m['id']],
-        );
-
-        final batchFoods = txn.batch();
-        for (final mf in mfRows) {
-          batchFoods.insert(
-            mealFoodsTable.name,
-            {
-              'meal_id': newMealId,
-              'food_id': mf['food_id'],
-              'quantity': mf['quantity'],
-              'kcal_total': mf['kcal_total'],
-              'notes': mf['notes'],
-            },
-            conflictAlgorithm: ConflictAlgorithm.replace,
+      if (targetClientIds.isNotEmpty) {
+        final batchLink = txn.batch();
+        for (final cId in targetClientIds) {
+          batchLink.insert(
+            clientMenusTable,
+            {'client_id': cId, 'menu_id': newMenuId},
+            conflictAlgorithm: ConflictAlgorithm.ignore,
           );
         }
-        await batchFoods.commit(noResult: true);
+        await batchLink.commit(noResult: true);
       }
 
       return newMenuId;
     });
   }
 
-  /// Menus de um cliente com meals e foods agrupados
-  Future<List<Map<String, dynamic>>> getMenusByClientWithMealsAndFoods(
-      int clientId) async {
-    final menus = await _db.database.rawQuery('''
-      SELECT m.id as menu_id, m.title, m.target_kcal
-      FROM ${menusTable.name} m
-      JOIN ${clientMenusTable.name} cm ON cm.menu_id = m.id
-      WHERE cm.client_id = ?
-      ORDER BY m.id DESC
-    ''', [clientId]);
-
-    for (final menu in menus) {
-      final menuId = menu['menu_id'] as int;
-
-      final meals = await _db.database.query(
-        mealsTable.name,
-        where: 'menu_id = ?',
-        whereArgs: [menuId],
-        orderBy: 'order_index ASC, id ASC',
-      );
-
-      final mealsOut = <Map<String, dynamic>>[];
-      for (final meal in meals) {
-        final mealId = meal['id'] as int;
-        final foods = await _db.database.rawQuery('''
-          SELECT f.id as food_id, f.name, f.default_portion, f.kcal_per_portion,
-                 mf.quantity, mf.kcal_total, mf.notes
-          FROM ${mealFoodsTable.name} mf
-          JOIN ${foodsTable.name} f ON f.id = mf.food_id
-          WHERE mf.meal_id = ?
-        ''', [mealId]);
-
-        mealsOut.add({
-          'id': mealId,
-          'name': meal['name'],
-          'orderIndex': meal['order_index'],
-          'foods': foods,
-        });
-      }
-
-      menu['meals'] = mealsOut;
-    }
-
-    return menus;
+  /// Atualiza apenas campos básicos do menu (title/target_kcal)
+  Future<int> updateMenuBasics({
+    required int menuId,
+    String? title,
+    int? targetKcal,
+  }) async {
+    final data = <String, dynamic>{};
+    if (title != null) data['title'] = title;
+    if (targetKcal != null) data['target_kcal'] = targetKcal;
+    if (data.isEmpty) return 0;
+    return _db.updateById(menusTable, {'id': menuId, ...data});
   }
 
-  /// Detalhe de um único menu (para edição)
-  Future<Map<String, dynamic>?> getMenuDetail(int menuId) async {
+  /// Lê e decodifica o meals_json de um menu (lista de maps).
+  Future<List<Map<String, dynamic>>> _readMealsJson(int menuId,
+      {Transaction? txn}) async {
+    final db = txn ?? _db.database;
+    final rows = await db.query(menusTable,
+        columns: ['meals_json'],
+        where: 'id = ?',
+        whereArgs: [menuId],
+        limit: 1);
+    if (rows.isEmpty) return [];
+    final raw = rows.first['meals_json'] as String? ?? '[]';
+    final parsed = jsonDecode(raw);
+    if (parsed is List) {
+      return parsed.cast<Map<String, dynamic>>();
+    }
+    return [];
+  }
+
+  /// Persiste a lista de meals no menu.
+  Future<int> _writeMealsJson(int menuId, List<Map<String, dynamic>> meals,
+      {Transaction? txn}) async {
+    final db = txn ?? _db.database;
+    return db.update(
+      menusTable,
+      {'meals_json': jsonEncode(meals)},
+      where: 'id = ?',
+      whereArgs: [menuId],
+    );
+  }
+
+  /// Adiciona uma meal ao final (retorna o índice adicionado).
+  Future<int> addMeal(
+    int menuId, {
+    required String title,
+    String? description,
+    List<int> foodIds = const [],
+  }) async {
+    final meals = await _readMealsJson(menuId);
+    final newMeal = {
+      'title': title,
+      'description': description,
+      'foodIds': foodIds,
+    };
+    meals.add(newMeal);
+    await _writeMealsJson(menuId, meals);
+    return meals.length - 1;
+  }
+
+  /// Atualiza uma meal por índice.
+  Future<void> updateMeal(
+    int menuId, {
+    required int mealIndex,
+    String? title,
+    String? description,
+    List<int>? foodIds,
+  }) async {
+    final meals = await _readMealsJson(menuId);
+    if (mealIndex < 0 || mealIndex >= meals.length) {
+      throw RangeError('mealIndex fora do intervalo');
+    }
+    final meal = Map<String, dynamic>.from(meals[mealIndex]);
+    if (title != null) meal['title'] = title;
+    if (description != null) meal['description'] = description;
+    if (foodIds != null) meal['foodIds'] = foodIds;
+    meals[mealIndex] = meal;
+    await _writeMealsJson(menuId, meals);
+  }
+
+  /// Remove uma meal por índice.
+  Future<void> removeMeal(int menuId, int mealIndex) async {
+    final meals = await _readMealsJson(menuId);
+    if (mealIndex < 0 || mealIndex >= meals.length) return;
+    meals.removeAt(mealIndex);
+    await _writeMealsJson(menuId, meals);
+  }
+
+  /// Substitui apenas os foodIds de uma meal.
+  Future<void> setMealFoods(
+      int menuId, int mealIndex, List<int> foodIds) async {
+    await updateMeal(menuId, mealIndex: mealIndex, foodIds: foodIds);
+  }
+
+  /// Exclui o menu (e vínculos N:N)
+  Future<int> deleteMenu(int menuId) async {
+    await _db.deleteWhere(clientMenusTable,
+        where: 'menu_id = ?', whereArgs: [menuId]);
+    return _db.deleteData(menusTable, menuId);
+  }
+
+  /// Detalhe de um único menu (para edição) – meals expandidas
+  Future<Map<String, dynamic>?> getMenuDetail(
+      int menuId, FoodsDatasource foodsDs) async {
     final menuRows = await _db.database.query(
-      menusTable.name,
+      menusTable,
       where: 'id = ?',
       whereArgs: [menuId],
       limit: 1,
@@ -226,32 +235,20 @@ class MenusDatasource {
     final menu = menuRows.first;
 
     final clients = await _db.database.rawQuery('''
-      SELECT c.id, c.name FROM ${TableNames.clients.name} c
-      JOIN ${clientMenusTable.name} cm ON cm.client_id = c.id
+      SELECT c.id, c.name 
+      FROM $clientsTable c
+      JOIN $clientMenusTable cm ON cm.client_id = c.id
       WHERE cm.menu_id = ?
     ''', [menuId]);
 
-    final meals = await _db.database.query(
-      mealsTable.name,
-      where: 'menu_id = ?',
-      whereArgs: [menuId],
-      orderBy: 'order_index ASC, id ASC',
-    );
-
+    final meals = await _readMealsJson(menuId);
     final mealsOut = <Map<String, dynamic>>[];
-    for (final meal in meals) {
-      final mealId = meal['id'] as int;
-      final foods = await _db.database.rawQuery('''
-        SELECT f.id as food_id, f.name, mf.quantity, mf.kcal_total, mf.notes
-        FROM ${mealFoodsTable.name} mf
-        JOIN ${foodsTable.name} f ON f.id = mf.food_id
-        WHERE mf.meal_id = ?
-      ''', [mealId]);
 
+    for (final m in meals) {
+      final ids = (m['foodIds'] as List?)?.cast<int>() ?? <int>[];
+      final foods = await foodsDs.getByIds(ids);
       mealsOut.add({
-        'id': mealId,
-        'name': meal['name'],
-        'orderIndex': meal['order_index'],
+        ...m,
         'foods': foods,
       });
     }
@@ -263,5 +260,53 @@ class MenusDatasource {
       'clients': clients,
       'meals': mealsOut,
     };
+  }
+
+  /// Menus de um cliente com meals e foods “expandidos”
+  Future<List<Map<String, dynamic>>> getMenusByClientWithMealsAndFoods(
+    int clientId,
+    FoodsDatasource foodsDs,
+  ) async {
+    final menus = await _db.database.rawQuery('''
+      SELECT m.id as menu_id, m.title, m.target_kcal, m.meals_json
+      FROM $menusTable m
+      JOIN $clientMenusTable cm ON cm.menu_id = m.id
+      WHERE cm.client_id = ?
+      ORDER BY m.id DESC
+    ''', [clientId]);
+
+    for (final menu in menus) {
+      final menuId = menu['menu_id'] as int;
+      final meals = (jsonDecode(menu['meals_json'] as String? ?? '[]') as List)
+          .cast<Map<String, dynamic>>();
+
+      final mealsOut = <Map<String, dynamic>>[];
+      for (final m in meals) {
+        final ids = (m['foodIds'] as List?)?.cast<int>() ?? <int>[];
+        final foods = await foodsDs.getByIds(ids);
+        mealsOut.add({
+          ...m,
+          'foods': foods,
+        });
+      }
+
+      menu['meals'] = mealsOut;
+      menu.remove('meals_json'); // limpa o campo bruto
+    }
+
+    return menus;
+  }
+
+  /// Retorna um menu “cru” (sem expandir meals)
+  Future<Map<String, dynamic>?> getMenuByIdRaw(int id) async {
+    final rows = await _db.database
+        .query(menusTable, where: 'id = ?', whereArgs: [id], limit: 1);
+    if (rows.isEmpty) return null;
+    return rows.first;
+  }
+
+  /// Retorna todos os menus “crus”
+  Future<List<Map<String, dynamic>>> getAllMenusRaw() {
+    return _db.database.query(menusTable, orderBy: 'id DESC');
   }
 }
