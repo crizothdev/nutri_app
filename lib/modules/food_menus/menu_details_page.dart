@@ -184,46 +184,59 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
   void createNewMeal() {
     final mealNameController = TextEditingController();
     showModalBottomSheet(
+      isScrollControlled: true,
       context: context,
       builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          height: 200,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Adicionar nova refeição',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: mealNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Título da refeição',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  // Importante: passar a referência "viva" do menu
-                  final liveMenu = controller.menus.firstWhere(
-                    (m) => m.id == menu.id,
-                    orElse: () => menu,
-                  );
-                  goMealSelectFoodsPage(
-                    CreateMealParams(
-                      mealName: mealNameController.text,
-                      menu: liveMenu,
-                      controller: controller,
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context)
+                .viewInsets
+                .bottom, // ✅ empurra quando teclado aparece
+            left: 16,
+            right: 16,
+            top: 16,
+          ),
+          child: SingleChildScrollView(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              height: 200,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Adicionar nova refeição',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: mealNameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Título da refeição',
+                      border: OutlineInputBorder(),
                     ),
-                  );
-                },
-                child: const Text('Adicionar Refeição'),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      // Importante: passar a referência "viva" do menu
+                      final liveMenu = controller.menus.firstWhere(
+                        (m) => m.id == menu.id,
+                        orElse: () => menu,
+                      );
+                      goMealSelectFoodsPage(
+                        CreateMealParams(
+                          mealName: mealNameController.text,
+                          menu: liveMenu,
+                          controller: controller,
+                        ),
+                      );
+                    },
+                    child: const Text('Adicionar Refeição'),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         );
       },
