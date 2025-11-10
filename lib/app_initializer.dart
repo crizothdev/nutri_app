@@ -1,4 +1,5 @@
 import 'package:nutri_app/app_info.dart';
+import 'package:nutri_app/core/data/demo_seeder.dart';
 import 'package:nutri_app/core/models/user.dart';
 import 'package:nutri_app/core/services/database_service.dart';
 import 'package:nutri_app/core/repositories/impl/users_repository_impl.dart';
@@ -36,6 +37,7 @@ class AppInitializer {
     schedulesRepository = SchedulesRepositoryImpl(db);
 
     await _maybeImportDefaultFoods(db);
+    await DemoSeeder.ensureDemo(db);
   }
 
   static Future<void> _maybeImportDefaultFoods(

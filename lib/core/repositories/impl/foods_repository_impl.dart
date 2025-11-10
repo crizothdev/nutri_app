@@ -23,10 +23,8 @@ class FoodsRepositoryImpl implements FoodsRepository {
 
   @override
   Future<void> importFromAppJson(List<Map<String, dynamic>> appJson) async {
-    // Converte JSON do app para o formato do datasource
     final toImport =
         appJson.map((j) => Food.fromAppJson(j)).map((f) => f.toMap()).toList();
-    // FoodsDatasource.importFoodsFromJson espera chaves: code, name, default_portion, calories
     await _ds.importFoodsFromJson(toImport);
   }
 
@@ -45,5 +43,11 @@ class FoodsRepositoryImpl implements FoodsRepository {
   @override
   Future<void> delete(int id) async {
     await _ds.deleteFood(id);
+  }
+
+  /// ✅ Retorna todos os alimentos (ordenados por nome)
+  Future<List<Food>> getAll({int? limit, int? offset}) async {
+    final rows = await _ds.getAll(limit: limit, offset: offset);
+    return rows.map(Food.fromMap).toList();
   }
 }

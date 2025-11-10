@@ -87,6 +87,7 @@ class _HomePageState extends State<HomePage> {
     if (widget.user != null) {
       controller.setUser(widget.user!);
     }
+    controller.fetchSchedulesAndPopulateMarkedDays();
     super.initState();
   }
 
@@ -100,32 +101,57 @@ class _HomePageState extends State<HomePage> {
     goNewSchedule(selectedDate);
   }
 
-  openDayInfo(DateTime date) {
-    //TODO
-    bool hasInfoOnControllerInThisDate = false;
-    return showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text(
-                'Informações do dia ${date.day}/${date.month}/${date.year}'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (!hasInfoOnControllerInThisDate)
-                  Text('Nenhum agendamento para este dia.'),
-                SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    showNewScheduleModal(date);
-                  },
-                  child: Text('Adicionar Agendamento'),
-                ),
-              ],
+  Future<void> openDayInfo(DateTime date) async {
+    final schedules = controller.schedules
+        .where((s) => DateUtils.isSameDay(s.date, date))
+        .toList();
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) {
+        return AlertDialog(
+          title:
+              Text('Informações do dia ${date.day}/${date.month}/${date.year}'),
+          content: Container(
+            child: schedules.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: Text('Nenhum agendamento para este dia.'),
+                  )
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: schedules.map((item) {
+                      return Column(
+                        children: [
+                          ListTile(
+                            dense: true,
+                            title: Text(item.patientName),
+                            subtitle:
+                                Text('${item.startTime} às ${item.endTime}'),
+                          ),
+                          Divider()
+                        ],
+                      );
+                    }).toList(),
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Fechar'),
             ),
-          );
-        });
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                showNewScheduleModal(date);
+              },
+              child: const Text('Adicionar Agendamento'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -153,7 +179,9 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            onPressed: () {},
+            onPressed: () {
+              goProfile();
+            },
             icon: Icon(
               Icons.person,
               color: Theme.of(context).primaryColor,

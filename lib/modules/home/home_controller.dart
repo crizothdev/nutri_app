@@ -9,6 +9,7 @@ class HomeController extends ChangeNotifier {
   Set<DateTime> markedDays = {};
   final schedulesRepository = AppInitializer.schedulesRepository;
   late User? user;
+  List<ScheduleModel> schedules = [];
 
   toggleLoading(bool val) {
     _isLoading = !_isLoading;
@@ -16,6 +17,18 @@ class HomeController extends ChangeNotifier {
   }
 
   bool get isLoading => _isLoading == true;
+
+  fetchSchedulesAndPopulateMarkedDays() async {
+    try {
+      schedules = await schedulesRepository.get();
+      if (schedules != null && schedules.isNotEmpty) {
+        for (var element in schedules) {
+          markedDays.add(element.date);
+        }
+      }
+      notifyListeners();
+    } catch (e) {}
+  }
 
   newSchedule(ScheduleModel schedule) {
     try {

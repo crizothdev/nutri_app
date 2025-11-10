@@ -114,8 +114,8 @@ class _ClientsDetailState extends State<ClientsDetail> {
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Cliente',
+                    Text(
+                      client.name,
                       style: TextStyle(
                         color: Colors.black,
                         fontWeight: FontWeight.bold,
@@ -126,7 +126,7 @@ class _ClientsDetailState extends State<ClientsDetail> {
                 ),
               ),
               Positioned(
-                top: 90,
+                top: 120,
                 left: 0,
                 right: 0,
                 child: Center(
@@ -144,7 +144,8 @@ class _ClientsDetailState extends State<ClientsDetail> {
                     ),
                     child: const CircleAvatar(
                       radius: 50,
-                      backgroundImage: AssetImage('assets/avatar.jpg'),
+                      child: Icon(Icons.person,
+                          size: 50), // AssetImage('assets/avatar.jpg'),
                     ),
                   ),
                 ),

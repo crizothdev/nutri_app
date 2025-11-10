@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nutri_app/modules/home/home_page.dart';
 import 'package:nutri_app/modules/schedules/schedules_controller.dart';
+import 'package:nutri_app/routes.dart';
 import 'package:nutri_app/widgets/statefull_wrapper.dart';
 
 class SchedulesPage extends StatefulWidget {
@@ -42,8 +43,12 @@ class _SchedulesPageState extends State<SchedulesPage> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(100),
         ),
-        onPressed: () {
-          // createNewClient();
+        onPressed: () async {
+          final date = await showDatePicker(
+              context: context,
+              firstDate: DateTime.now(),
+              lastDate: DateTime(2100));
+          goNewSchedule(date ?? DateTime.now());
         },
         backgroundColor: Theme.of(context).primaryColor,
         child: Icon(Icons.add, color: Colors.white),
@@ -52,8 +57,11 @@ class _SchedulesPageState extends State<SchedulesPage> {
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(22),
-            child: ListView.builder(
+            child: ListView.separated(
               itemCount: controller.schedules.length,
+              separatorBuilder: (context, index) => SizedBox(
+                height: 10,
+              ),
               itemBuilder: (context, index) {
                 final item = controller.schedules[index];
                 return ScheduleCard(item: item);

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:nutri_app/app_initializer.dart';
 import 'package:nutri_app/core/models/client.dart';
+import 'package:nutri_app/core/models/menu.dart';
 import 'package:nutri_app/core/models/user.dart';
 import 'package:nutri_app/modules/food_menus/client_menus_page.dart';
+import 'package:nutri_app/modules/food_menus/meal_select_foods_page.dart';
+import 'package:nutri_app/modules/food_menus/menu_details_page.dart';
 import 'package:nutri_app/modules/home/home_page.dart';
 import 'package:nutri_app/modules/login/login_page.dart';
 import 'package:nutri_app/modules/login/splash_page.dart';
@@ -25,6 +29,8 @@ const String _clientMenusRoute = '/clientmenus';
 const String _ClientsDetailRoute = '/clientDetail';
 const String _newSchedulePage = '/newSchedule';
 const String _schedulesPage = '/schedules';
+const String _menuDetailsPage = '/menudetails';
+const String _mealSelectFoodsPage = '/mealselectfoods';
 
 final routes = {
   _SplashRoute: (context) => const SplashPage(),
@@ -38,12 +44,17 @@ final routes = {
       client: ModalRoute.of(context)!.settings.arguments as Client),
   _clientMenusRoute: (context) => ClientMenusPage(
       client: ModalRoute.of(context)!.settings.arguments as Client),
-  _ProfileRoute: (context) => const ProfilePage(),
+  _ProfileRoute: (context) =>
+      ProfilePage(user: ModalRoute.of(context)!.settings.arguments as User),
   _SignupRoute: (context) => const SignupPage(),
   // _FoodMenusRoute: (context) => const FoodMenusPage(),
   _schedulesPage: (context) => const SchedulesPage(),
   _newSchedulePage: (context) => NewSchedulePage(
       selectedDate: ModalRoute.of(context)!.settings.arguments as DateTime),
+  _menuDetailsPage: (context) => MenuDetailPage(
+      params: ModalRoute.of(context)!.settings.arguments as MenuDetailsParams),
+  _mealSelectFoodsPage: (context) => MealSelectFoodsPage(
+      params: ModalRoute.of(context)!.settings.arguments as CreateMealParams),
 };
 
 void goHome([User? user]) {
@@ -75,7 +86,8 @@ void goClientMenus(Client client) {
 }
 
 void goProfile() {
-  navigatorKey.currentState?.pushNamed(_ProfileRoute);
+  navigatorKey.currentState
+      ?.pushNamed(_ProfileRoute, arguments: AppInitializer.appInfo.currentUser);
 }
 
 void goSignup() {
@@ -88,4 +100,16 @@ void goNewSchedule(DateTime date) {
 
 void goBack() {
   navigatorKey.currentState?.pop();
+}
+
+void goMenuDetails(MenuDetailsParams params, {bool replace = false}) {
+  if (replace)
+    navigatorKey.currentState
+        ?.pushReplacementNamed(_menuDetailsPage, arguments: params);
+  else
+    navigatorKey.currentState?.pushNamed(_menuDetailsPage, arguments: params);
+}
+
+void goMealSelectFoodsPage(CreateMealParams params) {
+  navigatorKey.currentState?.pushNamed(_mealSelectFoodsPage, arguments: params);
 }

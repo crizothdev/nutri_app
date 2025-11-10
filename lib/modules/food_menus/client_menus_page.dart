@@ -16,19 +16,20 @@ class _ClientMenusPageState extends State<ClientMenusPage> {
   final controller = ClientMenusController();
   Client get client => widget.client;
 
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
-  }
+  // @override
+  // void dispose() {
+  //   controller.dispose();
+  //   super.dispose();
+  // }
 
   @override
   void initState() {
     controller.fetchMenus(client.id ?? 0);
+
     super.initState();
   }
 
-  createNewMenu(Client client) {
+  createNewMenu(Client client, {bool isNew = false}) {
     // abrir modal com o nome do menu e seguir para a pagina de ediçao de cardapio
 
     return showDialog(
@@ -52,12 +53,13 @@ class _ClientMenusPageState extends State<ClientMenusPage> {
                 onPressed: () {
                   // Lógica para criar o novo cardápio
                   final newMenu = Menu(
-                    title:
-                        'Nome do Cardápio', // Substituir pelo valor do TextField
-                    id: client.id,
+                    title: 'Nome do Cardápio', // pegue do TextField
+                    // id: null  (não setar!)
+                    // targetKcal: opcional
+                    meals: const [],
                   );
-                  controller.createAndEditMenu(newMenu);
                   Navigator.of(context).pop();
+                  controller.createAndEditMenu(newMenu, isNew: true);
                 },
                 child: Text('Criar'),
               ),
@@ -71,10 +73,25 @@ class _ClientMenusPageState extends State<ClientMenusPage> {
     return NotifierScaffold<ClientMenusController>(
       state: controller,
       isLoading: controller.isLoading,
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFBFCDB3),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Cardápios de ${client.name}',
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           // Ação ao pressionar o botão de adicionar novo cardápio
-          createNewMenu(client);
+          createNewMenu(client, isNew: true);
         },
         backgroundColor: const Color(0xFF4B6B36),
         child: const Icon(Icons.add, color: Colors.white),
@@ -91,7 +108,12 @@ class _ClientMenusPageState extends State<ClientMenusPage> {
             itemCount: state.menus.length,
             itemBuilder: (context, index) {
               final menu = state.menus[index];
-              return MenuCard(menu: menu);
+              return MenuCard(
+                menu: menu,
+                onTapMenu: () {
+                  controller.openOrEditMenu(menu);
+                },
+              );
             },
           ),
         );
@@ -102,32 +124,36 @@ class _ClientMenusPageState extends State<ClientMenusPage> {
 
 class MenuCard extends StatelessWidget {
   final Menu menu;
-  const MenuCard({super.key, required this.menu});
+  final Function() onTapMenu;
+  const MenuCard({super.key, required this.menu, required this.onTapMenu});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4.0,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(menu.title ?? '',
-              style:
-                  TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-          Icon(Icons.chevron_right, color: Colors.grey)
-        ],
+    return InkWell(
+      onTap: onTapMenu,
+      child: Container(
+        padding: const EdgeInsets.all(16.0),
+        margin: const EdgeInsets.symmetric(vertical: 8.0),
+        decoration: BoxDecoration(
+          color: Color.fromARGB(255, 114, 143, 95),
+          borderRadius: BorderRadius.circular(8.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4.0,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(menu.title ?? '',
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
+            Icon(Icons.chevron_right, color: Colors.white)
+          ],
+        ),
       ),
     );
   }

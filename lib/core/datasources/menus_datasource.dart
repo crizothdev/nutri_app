@@ -222,6 +222,46 @@ class MenusDatasource {
     return _db.deleteData(menusTable, menuId);
   }
 
+  Future<int> deleteMenuForClient(int menuId, int clientId) async {
+    return _db.database.transaction<int>((txn) async {
+      // Conta quantos clientes estão vinculados a este menu
+      final countRow = await txn.rawQuery(
+        'SELECT COUNT(*) AS c FROM $clientMenusTable WHERE menu_id = ?',
+        [menuId],
+      );
+      final count = (countRow.first['c'] as int?) ?? 0;
+      if (count == 0) {
+        // não há vínculos — nada a fazer
+        return 0;
+      }
+
+      // Remove o vínculo do cliente atual
+      final removed = await txn.delete(
+        clientMenusTable,
+        where: 'menu_id = ? AND client_id = ?',
+        whereArgs: [menuId, clientId],
+      );
+
+      if (removed == 0) {
+        // vínculo não existia
+        return 0;
+      }
+
+      if (count == 1) {
+        // Era o único vínculo — deletar também o menu
+        await txn.delete(
+          menusTable,
+          where: 'id = ?',
+          whereArgs: [menuId],
+        );
+        return 2; // removeu vínculo + deletou menu
+      }
+
+      // Ainda há outros clientes usando esse menu — só removemos o vínculo
+      return 1; // apenas removeu vínculo
+    });
+  }
+
   /// Detalhe de um único menu (para edição) – meals expandidas
   Future<Map<String, dynamic>?> getMenuDetail(
       int menuId, FoodsDatasource foodsDs) async {
@@ -262,39 +302,41 @@ class MenusDatasource {
     };
   }
 
-  /// Menus de um cliente com meals e foods “expandidos”
   Future<List<Map<String, dynamic>>> getMenusByClientWithMealsAndFoods(
     int clientId,
     FoodsDatasource foodsDs,
   ) async {
-    final menus = await _db.database.rawQuery('''
-      SELECT m.id as menu_id, m.title, m.target_kcal, m.meals_json
-      FROM $menusTable m
-      JOIN $clientMenusTable cm ON cm.menu_id = m.id
-      WHERE cm.client_id = ?
-      ORDER BY m.id DESC
-    ''', [clientId]);
+    final rows = await _db.database.rawQuery('''
+    SELECT m.id as menu_id, m.title, m.target_kcal, m.meals_json
+    FROM $menusTable m
+    JOIN $clientMenusTable cm ON cm.menu_id = m.id
+    WHERE cm.client_id = ?
+    ORDER BY m.id DESC
+  ''', [clientId]);
 
-    for (final menu in menus) {
-      final menuId = menu['menu_id'] as int;
-      final meals = (jsonDecode(menu['meals_json'] as String? ?? '[]') as List)
-          .cast<Map<String, dynamic>>();
+    final out = <Map<String, dynamic>>[];
+
+    for (final row in rows) {
+      final mealsJson = (row['meals_json'] as String?) ?? '[]';
+      final mealsList = (jsonDecode(mealsJson) as List)
+          .map((e) => (e as Map).map((k, v) => MapEntry('$k', v)))
+          .toList(); // garante Map<String, dynamic>
 
       final mealsOut = <Map<String, dynamic>>[];
-      for (final m in meals) {
-        final ids = (m['foodIds'] as List?)?.cast<int>() ?? <int>[];
+      for (final m in mealsList) {
+        final ids = (m['foodIds'] as List?)?.cast<int>() ?? const <int>[];
         final foods = await foodsDs.getByIds(ids);
-        mealsOut.add({
-          ...m,
-          'foods': foods,
-        });
+        mealsOut.add({...m, 'foods': foods});
       }
 
-      menu['meals'] = mealsOut;
-      menu.remove('meals_json'); // limpa o campo bruto
+      out.add({
+        // cópia do row garantindo String,dynamic
+        ...row.map((k, v) => MapEntry(k.toString(), v)),
+        'meals': mealsOut,
+      }..remove('meals_json'));
     }
 
-    return menus;
+    return out;
   }
 
   /// Retorna um menu “cru” (sem expandir meals)
@@ -308,5 +350,37 @@ class MenusDatasource {
   /// Retorna todos os menus “crus”
   Future<List<Map<String, dynamic>>> getAllMenusRaw() {
     return _db.database.query(menusTable, orderBy: 'id DESC');
+  }
+
+  Future<int> updateMealsJson({
+    required int menuId,
+    required List<Map<String, dynamic>> mealsJsonList,
+  }) async {
+    final jsonStr = jsonEncode(mealsJsonList);
+    return _db.updateData(
+      SQLStrings.tMenus,
+      {'meals_json': jsonStr},
+      where: 'id = ?',
+      whereArgs: [menuId],
+    );
+  }
+
+  Future<int> updateMenu({
+    required int id,
+    required String title,
+    int? targetKcal,
+    required List<Map<String, dynamic>> mealsJsonList,
+  }) async {
+    final jsonStr = jsonEncode(mealsJsonList);
+    return _db.updateData(
+      SQLStrings.tMenus,
+      {
+        'title': title,
+        'target_kcal': targetKcal,
+        'meals_json': jsonStr,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 }

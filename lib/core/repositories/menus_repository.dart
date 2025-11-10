@@ -23,4 +23,12 @@ abstract class MenusRepository {
 
   /// Retorna o agregado completo (menu + meals + foods + clientes).
   Future<MenuAggregate?> aggregate(int menuId);
+
+  Future<int> deleteMenuForClient(int menuId, int clientId);
+
+  Future<int> create({
+    required String title,
+    int? targetKcal,
+    required int clientId,
+  });
 }

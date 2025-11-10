@@ -1,3 +1,4 @@
+import 'package:nutri_app/core/models/food.dart';
 import 'package:nutri_app/core/repositories/menus_repository.dart';
 
 import '../../models/menu.dart';
@@ -46,21 +47,76 @@ class MenusRepositoryImpl implements MenusRepository {
     );
   }
 
+  Future<void> update(Menu menu) async {
+    if (menu.id == null) {
+      throw ArgumentError('Menu sem id para update.');
+    }
+
+    final mealsJsonList = _serializeMeals(menu.meals);
+    await _ds.updateMenu(
+      id: menu.id!,
+      title: menu.title,
+      targetKcal: menu.targetKcal,
+      mealsJsonList: mealsJsonList,
+    );
+  }
+
+  List<Map<String, dynamic>> _serializeMeals(List<Meal> meals) {
+    return meals.map((m) {
+      final foodIds = m.foods
+          .map((mf) => mf.food.id)
+          .whereType<int>() // garante só ids válidos
+          .toList();
+
+      return {
+        'title': m.title,
+        if (m.description != null) 'description': m.description,
+        'foodIds': foodIds,
+      };
+    }).toList();
+  }
+
   @override
   Future<List<Menu>> byClient(int clientId) async {
-    // Consulta expandida; aqui retornamos apenas o Menu “flat” para listagem
     final rows =
         await _ds.getMenusByClientWithMealsAndFoods(clientId, _foodsDs);
 
-    return rows
-        .map(
-          (m) => Menu(
-            id: m['menu_id'] as int?,
-            title: m['title'] as String,
-            targetKcal: m['target_kcal'] as int?,
-          ),
-        )
-        .toList();
+    return rows.map<Menu>((m) {
+      final mealsList =
+          (m['meals'] as List? ?? const []).cast<Map<String, dynamic>>();
+
+      final meals = mealsList.map<Meal>((mm) {
+        // Lista de "foods" já expandida pelo datasource
+        final foodsRows =
+            (mm['foods'] as List? ?? const []).cast<Map<String, dynamic>>();
+
+        final items = foodsRows.map<MealFood>((fr) {
+          // Constrói o Food a partir da row do banco
+          final food = Food.fromMap(fr);
+
+          // Se o datasource passar quantity/notes, usamos; senão: defaults
+          final quantity = (fr['quantity'] is num)
+              ? (fr['quantity'] as num).toDouble()
+              : 1.0;
+          final notes = fr['notes']?.toString();
+
+          return MealFood(food: food, quantity: quantity, notes: notes);
+        }).toList();
+
+        return Meal(
+          title: (mm['title'] ?? mm['name'] ?? '').toString(),
+          description: mm['description']?.toString(),
+          foods: items,
+        );
+      }).toList();
+
+      return Menu(
+        id: m['menu_id'] as int?,
+        title: (m['title'] ?? '').toString(),
+        targetKcal: m['target_kcal'] as int?,
+        meals: meals,
+      );
+    }).toList();
   }
 
   @override
@@ -116,5 +172,26 @@ class MenusRepositoryImpl implements MenusRepository {
       'kcal_total': null,
       'notes': null,
     });
+  }
+
+  @override
+  Future<int> deleteMenuForClient(int menuId, int clientId) {
+    return _ds.deleteMenuForClient(menuId, clientId);
+  }
+
+  @override
+  Future<int> create({
+    required String title,
+    int? targetKcal,
+    required int clientId,
+  }) async {
+    // cria o menu “vazio” já vinculado ao cliente
+    final newMenuId = await _ds.createMenuWithMeals(
+      title: title,
+      targetKcal: targetKcal,
+      clientIds: [clientId],
+      meals: const [], // sem meals no create
+    );
+    return newMenuId;
   }
 }

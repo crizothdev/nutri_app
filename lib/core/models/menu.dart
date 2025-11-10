@@ -80,11 +80,11 @@ class MealFood {
   final Food food;
 
   /// Multiplicador de porções (ex.: 1.5 porções)
-  final double quantity;
+  double quantity;
 
   final String? notes;
 
-  const MealFood({
+  MealFood({
     required this.food,
     this.quantity = 1.0,
     this.notes,
